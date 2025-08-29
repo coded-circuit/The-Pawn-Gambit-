@@ -1,0 +1,221 @@
+/* In UI.module.scss */
+
+$gameOverHeight: 40rem;
+$gameOverWidth: 100vw;
+
+.hud {
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  z-index: theme.$z-ind-game-ui;
+  /* UPDATED: This allows clicks to pass through the main container... */
+  pointer-events: none;
+}
+
+.touchArea {
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* This should also be none */
+}
+
+/* ...but we re-enable them for the specific UI elements that need to be clicked. */
+.upperRight,
+.upgradeButtonsContainer,
+.gameOver {
+  pointer-events: auto;
+}
+
+.gameOver {
+  width: $gameOverWidth;
+  height: $gameOverHeight;
+  position: absolute;
+  top: calc((100vh - $gameOverHeight) / 2);
+  left: calc((100vw - $gameOverWidth) / 2);
+  z-index: 200;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+  word-spacing: -0.2rem;
+  text-shadow: 0 0 0.5rem black;
+  animation: slideUp 2s cubic-bezier(0.25, 1, 0.5, 1);
+
+  span.gameOverText {
+    color: theme.$light-clr-1;
+    margin-bottom: 0.3rem;
+    margin-top: -1rem;
+    font-size: 6rem;
+  }
+  span.scoreText {
+    color: theme.$acc-clr-3;
+    margin-bottom: 0.5rem;
+    font-size: 6rem;
+    @include theme.breathing;
+  }
+  span.subtitleText {
+    color: theme.$light-clr-1;
+    font-size: 2.8rem;
+  }
+  span.titleText {
+    color: theme.$light-clr-1;
+    font-size: 3.8rem;
+  }
+  div.gameBox {
+    display: flex;
+    gap: 3rem;
+    border: 1px dashed whitesmoke;
+    padding: 10px 20px;
+    margin-bottom: 2rem;
+    border-radius: 20px;
+    span div {
+      color: theme.$acc-clr-3;
+      @include theme.breathing;
+    }
+  }
+  div.gameBox2 {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    border: 1px dashed whitesmoke;
+    padding: 10px 20px;
+    margin-bottom: 2rem;
+    border-radius: 20px;
+    span div {
+      color: theme.$acc-clr-3;
+      @include theme.breathing;
+    }
+  }
+  button.playagain {
+    width: 5rem;
+  }
+}
+
+.upperLeft,
+.upperRight,
+.upperCenter {
+  width: auto;
+  position: absolute;
+  padding: 1.2rem;
+  z-index: 1;
+}
+
+.upperLeft {
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  color: theme.$acc-clr-1;
+
+  span.uiVariable {
+    margin-bottom: 0.5rem;
+    font-size: 4rem;
+  }
+  span.uiLabel {
+    margin-bottom: -0.5rem;
+    font-size: 2rem;
+  }
+}
+
+.upperRight {
+  right: 0;
+  top: 0;
+  display: flex;
+  flex-direction: row;
+}
+
+.upperCenter {
+  $width: 60vmin;
+  left: calc((100vw - $width) / 2);
+  top: calc(50vh - 45vmin);
+  width: $width;
+  height: 5vmin;
+  padding: 0;
+
+  div.cooldownBar {
+    background-color: theme.$acc-clr-1;
+    width: 100%;
+    height: 100%;
+    border-radius: 3vmin;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    div.cooldownBarBG {
+      background-color: theme.$cell-clr-1;
+      border-radius: 2vmin;
+      width: 95%;
+      height: 50%;
+      overflow: hidden;
+
+      div.cooldownBarFill {
+        background-color: theme.$acc-clr-3;
+        height: 100%;
+        transition: width 0.5s;
+      }
+    }
+  }
+}
+.upgradeButtonsContainer {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1rem;
+  z-index: 100;
+}
+
+.upgradeButton {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+
+  &:hover:not([disabled]) {
+    background-color: #45a049;
+  }
+
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.puff {
+  animation: puff 0.2s;
+}
+
+.barFull {
+  @include theme.barFull;
+}
+
+@keyframes puff {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  15% {
+    transform: scale(1.3);
+  }
+}
+
+@keyframes slideUp {
+  0%,
+  40% {
+    top: -$gameOverHeight;
+  }
+  100% {
+    top: calc((100vh - $gameOverHeight) / 2);
+  }
+}

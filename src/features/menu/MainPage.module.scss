@@ -1,0 +1,99 @@
+h1.logo {
+  // font-size: 6rem;
+  // text-shadow: 0 0.5rem 0.6rem black;
+  width: 100%;
+
+  margin-top: -5vh;
+  margin-bottom: 2rem;
+
+  @include theme.breathing;
+
+  @media (max-width: 425px) {
+    width: 120%;
+  }
+  @media (min-width: 992px) {
+    width: 80%;
+  }
+}
+
+.subtitle { 
+  margin-bottom: -0.8rem;
+  font-size: 2.5rem;
+  display: block;
+  text-align: center;
+}
+
+.mainMenu {
+  @include theme.mainMenuContainer;
+}
+
+.panel {
+  width: min(100%, 64rem);
+  height: 100%;
+  padding: 4rem 2.4rem 3rem;
+  border-radius: 1.4rem;
+  border: 3px solid theme.$acc-clr-2;
+  box-shadow: 0 1.2rem 3rem rgba(0, 0, 0, 0.4), inset 0 0 0.8rem rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+}
+
+.tagline {
+  // color: theme.$light-clr-2;
+  // opacity: 0.95;
+  font-size: 2.4rem;
+  margin: -0.6rem 0 1.8rem 0;
+  text-shadow: 0 0.2rem 0.3rem rgba(0, 0, 0, 0.35);
+}
+
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+  width: 100%;
+}
+
+.cta {
+  width: min(100%, 42rem);
+  padding: 1.2rem 2rem;
+  border-radius: 1rem;
+  border: none;
+  text-shadow: none;
+  letter-spacing: 0.04em;
+  box-shadow: 0 0.6rem 0 rgba(0, 0, 0, 0.25), 0 1.2rem 2rem rgba(0, 0, 0, 0.25);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+  // Override global button hover shake for cleaner CTAs
+  &:hover {
+    animation: none !important;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 0.8rem 0 rgba(0, 0, 0, 0.28), 0 1.6rem 2.4rem rgba(0, 0, 0, 0.28);
+    filter: brightness(1.05);
+  }
+  &:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 0.4rem 0 rgba(0, 0, 0, 0.22), 0 0.8rem 1.2rem rgba(0, 0, 0, 0.22);
+    color: rgba(0, 0, 0, 0.28);
+  }
+  &:focus {
+    outline: 3px solid rgba(255, 255, 255, 0.45);
+    outline-offset: 3px;
+    background-clip: padding-box;
+  }
+}
+.primary {
+  background: linear-gradient(180deg, lighten(theme.$acc-clr-3, 10%) 0%, theme.$acc-clr-3 100%);
+  color: theme.$light-clr-1;
+  box-shadow: 0 0.6rem 0 darken(theme.$acc-clr-3, 25%), 0 1.2rem 2rem rgba(0, 0, 0, 0.25);
+  font-size: 2rem;
+}
+
+.secondary {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  color: theme.$light-clr-1;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0.6rem 0 rgba(0, 0, 0, 0.25), inset 0 0 0.6rem rgba(255, 255, 255, 0.04);
+}

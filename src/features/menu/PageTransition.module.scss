@@ -1,0 +1,110 @@
+$zigzag-bg: #e9b06b;
+$zigzag-fg: #e6a459;
+// $zigzag-bg: #8d87ac;
+// $zigzag-fg: #837da3;
+$zigzag-scale: 20vh;
+
+.transition {
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  z-index: 99;
+  animation: transition 1.5s ease-in-out forwards;
+}
+.bottomTeeth,
+.topTeeth {
+  height: $zigzag-scale;
+  background-color: transparent;
+}
+
+.bottomTeeth,
+.topTeeth,
+.transitionBody {
+  width: 100%;
+  background-size: $zigzag-scale $zigzag-scale;
+  background-position: $zigzag-scale * 0.5 0, $zigzag-scale * 0.5 0, 0 0, 0 0;
+}
+
+.bottomTeeth {
+  background-image: linear-gradient(-45deg, transparent, transparent),
+    linear-gradient(45deg, transparent, transparent),
+    linear-gradient(
+      135deg,
+      $zigzag-fg 0,
+      $zigzag-fg 25%,
+      transparent 25%,
+      transparent 100%
+    ),
+    linear-gradient(
+      -135deg,
+      $zigzag-fg 0,
+      $zigzag-fg 25%,
+      transparent 25%,
+      transparent 100%
+    );
+}
+.topTeeth {
+  background-image: linear-gradient(
+      -45deg,
+      $zigzag-fg 0,
+      $zigzag-fg 25%,
+      transparent 25%,
+      transparent 100%
+    ),
+    linear-gradient(
+      45deg,
+      $zigzag-fg 0,
+      $zigzag-fg 25%,
+      transparent 25%,
+      transparent 100%
+    ),
+    linear-gradient(135deg, transparent, transparent),
+    linear-gradient(-135deg, transparent, transparent);
+}
+
+.transitionBody {
+  height: calc(100vh + $zigzag-scale * 2);
+
+  background-color: $zigzag-bg;
+  background-image: linear-gradient(
+      -45deg,
+      $zigzag-fg 0,
+      $zigzag-fg 25%,
+      transparent 25%,
+      transparent 100%
+    ),
+    linear-gradient(
+      45deg,
+      $zigzag-fg 0,
+      $zigzag-fg 25%,
+      transparent 25%,
+      transparent 100%
+    ),
+    linear-gradient(
+      135deg,
+      $zigzag-fg 0,
+      $zigzag-fg 25%,
+      transparent 25%,
+      transparent 100%
+    ),
+    linear-gradient(
+      -135deg,
+      $zigzag-fg 0,
+      $zigzag-fg 25%,
+      transparent 25%,
+      transparent 100%
+    );
+}
+
+@keyframes transition {
+  0% {
+    top: 100vh;
+  }
+  40%,
+  60% {
+    top: -$zigzag-scale * 3;
+  }
+  100% {
+    top: calc(-100vh - ($zigzag-scale * 4));
+  }
+}

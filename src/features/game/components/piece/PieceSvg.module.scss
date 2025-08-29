@@ -1,0 +1,57 @@
+.player,
+.pawn,
+.knight,
+.rook,
+.bishop,
+.queen {
+  width: calc(theme.$grid-scale / 8 * 0.7);
+  position: absolute;
+  bottom: calc(theme.$grid-scale / 8 * 0.25);
+
+  &.player {
+    left: calc(theme.$grid-scale / 8 * 0.152);
+  }
+
+  &.pawn {
+    left: calc(theme.$grid-scale / 8 * 0.15);
+  }
+
+  &.knight {
+    left: calc(theme.$grid-scale / 8 * 0.13);
+  }
+
+  &.bishop {
+    left: calc(theme.$grid-scale / 8 * 0.15);
+  }
+
+  &.rook {
+    left: calc(theme.$grid-scale / 8 * 0.15);
+  }
+
+  &.queen {
+    left: calc(theme.$grid-scale / 8 * 0.15);
+  }
+}
+
+.shadow {
+  width: calc(theme.$grid-scale / 8 * 0.8);
+  left: calc(theme.$grid-scale / 8 * 0.1);
+  bottom: calc(theme.$grid-scale / 8 * 0.15);
+  z-index: -1;
+  position: absolute;
+}
+
+.movingShadow {
+  animation: movingShadow 0.2s;
+}
+
+@keyframes movingShadow {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(0.8);
+  }
+}

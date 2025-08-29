@@ -1,0 +1,89 @@
+$grid-top-offset: 50vh;
+$grid-border-outer-radius: 4vmin;
+$grid-border-inner-radius: 2vmin;
+$grid-border-thickness: 3vmin;
+
+.graphicsGridBorder,
+.graphicsGridTrunk {
+  width: calc(theme.$grid-scale + $grid-border-thickness * 2);
+  height: calc(theme.$grid-scale + $grid-border-thickness * 2);
+  position: absolute;
+  top: calc($grid-top-offset - theme.$grid-scale / 2 - $grid-border-thickness);
+  left: calc(50vw - theme.$grid-scale / 2 - $grid-border-thickness);
+  border-radius: $grid-border-outer-radius;
+
+  &.graphicsGridBorder {
+    z-index: theme.$z-ind-grid-border;
+    background-color: theme.$acc-clr-1;
+    // background-color: transparent;
+    // border: 3rem solid theme.$acc-clr-1;
+  }
+
+  &.graphicsGridTrunk {
+    z-index: theme.$z-ind-grid-trunk;
+    background-color: theme.$acc-clr-2;
+
+    height: 100vh;
+    $shadow-clr: rgba(0, 0, 0, 0.147);
+    background-image: linear-gradient(
+      90deg,
+      $shadow-clr,
+      transparent calc($grid-border-outer-radius / 2),
+      transparent calc(100% - $grid-border-outer-radius / 2),
+      $shadow-clr
+    );
+  }
+}
+
+.piecesContainer,
+.gridContainer {
+  width: calc(theme.$grid-scale);
+  height: calc(theme.$grid-scale);
+  position: absolute;
+  top: calc($grid-top-offset - theme.$grid-scale / 2);
+  left: calc(50vw - theme.$grid-scale / 2);
+
+  &.gridContainer {
+    border-radius: $grid-border-inner-radius;
+    z-index: theme.$z-ind-grid;
+    overflow: hidden;
+
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+  }
+
+  &.piecesContainer {
+    z-index: theme.$z-ind-grid-pieces;
+    pointer-events: none;
+  }
+}
+.upgradeButtonsContainer {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1rem;
+  z-index: 100;
+}
+
+.upgradeButton {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+
+  &:hover:not([disabled]) {
+    background-color: #45a049;
+  }
+
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+}

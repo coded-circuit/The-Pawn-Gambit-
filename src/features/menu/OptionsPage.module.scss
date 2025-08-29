@@ -1,0 +1,26 @@
+h1.heading {
+  margin-bottom: 2rem;
+  @include theme.breathing;
+  @include theme.heading;
+}
+
+p.optionLabel {
+  color: theme.$light-clr-2;
+  font-size: 2rem;
+  margin-top: 2.7rem;
+  margin-bottom: -0.2rem;
+  text-shadow: 0 0rem 0.6rem black;
+}
+
+button.optionButton {
+  font-size: 3rem;
+}
+
+button.backButton {
+  font-size: 2rem;
+  margin-top: 4rem;
+}
+
+.optionsMenu {
+  @include theme.mainMenuContainer;
+}

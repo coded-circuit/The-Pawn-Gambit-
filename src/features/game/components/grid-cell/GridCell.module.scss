@@ -1,0 +1,34 @@
+// .evenGridCell,
+// .oddGridCell {
+//   box-shadow: inset 0 0 2vmin rgba(0, 0, 0, 0.1);
+// }
+
+.evenGridCell {
+  background-color: theme.$cell-clr-1;
+}
+
+.oddGridCell {
+  background-color: theme.$cell-clr-2;
+}
+
+.invisible {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.visible {
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+.potentialMove {
+  // Example styles to make it stand out
+  background-color: rgba(132, 255, 132, 0.5); /* A semi-transparent light green */
+  border: 2px solid #336633;
+  cursor: pointer;
+  box-shadow: 0 0 10px 2px rgba(50, 205, 50, 0.7); /* Green glow effect */
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+}
