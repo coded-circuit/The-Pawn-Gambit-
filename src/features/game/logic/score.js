@@ -29,6 +29,7 @@ const difficultyMultiplier = {
   [Difficulty.EASY]: 1.0,
   [Difficulty.NORMAL]: 1.5,
   [Difficulty.HARD]: 2.0,
+  [Difficulty.INSANE]: 2.5,
 };
 const survivalGemReward = 1;
 const pieceCaptureGemReward = {

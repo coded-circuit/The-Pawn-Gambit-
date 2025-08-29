@@ -1,6 +1,7 @@
 import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
 import { BlackPieceType, PieceType, assertIsVector } from "../../../../global/utils";
+import { selectPlayerPosition, selectGridSize } from "../../../../data/gameSlice";
 import styles from "./Piece.module.scss";
 
 // --- SVG Imports ---
@@ -16,12 +17,12 @@ import Rook from "./RookSvg";
 import Shadow from "./ShadowSvg";
 
 import { useSelector } from "react-redux";
-import { selectPlayerPosition } from "../../../../data/gameSlice";
 
 
 const Piece = ({ gridPos, type, isCaptured }) => {
   // Always select the player's position (used as a fallback only)
   const playerGridPos = useSelector(selectPlayerPosition);
+  const gridSize = useSelector(selectGridSize);
   // Prefer the provided gridPos (for enemies and explicitly passed cases),
   // otherwise fall back to the player's position (for the player's own piece).
   const effectivePos = gridPos ?? playerGridPos;
@@ -44,8 +45,8 @@ const Piece = ({ gridPos, type, isCaptured }) => {
   assertIsVector(effectivePos);
 
   const gfxPlayerStyles = {
-    top: `${(effectivePos.y * 100) / 8}%`,
-    left: `${(effectivePos.x * 100) / 8}%`,
+    top: `${(effectivePos.y * 100) / gridSize}%`,
+    left: `${(effectivePos.x * 100) / gridSize}%`,
     zIndex: effectivePos.y,
     opacity: isCaptured ? 0.0 : 1.0,
   };
@@ -74,7 +75,13 @@ const Piece = ({ gridPos, type, isCaptured }) => {
   return (
     <div className={styles.piece} style={gfxPlayerStyles}>
       <div className={isMoving ? `${styles.jumpReference} ${styles.jumping}` : styles.jumpReference}>
-        <div className={styles.danceReference}>
+        <div className={
+            cooldownLeft === 0
+              ? styles.jiggleReference
+              : cooldownLeft === 99
+              ? styles.celebrateReference
+              : styles.danceReference
+          }>
           {pieceComponent}
         </div>
       </div>

@@ -15,9 +15,7 @@ const GridCell = ({ pos, isCapture, isPotentialMove, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className={`${cellClasses} ${
-        isPotentialMove ? styles.potentialMove : ""
-      }`}
+      className={cellClasses}
     >
       {showIndicators && (
         <div className={isCapture ? styles.visible : styles.invisible}>

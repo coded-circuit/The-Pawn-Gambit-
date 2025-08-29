@@ -7,7 +7,7 @@ import {
   TRANSITION_HALF_LIFE,
   BlackPieceType,
 } from "../../../../global/utils";
-
+ 
 import {
   resetState,
   restartGame,
@@ -223,7 +223,7 @@ const GameUI = ({
       </div>
       <div className={styles.touchArea} {...touchHandlers} />
 
-      {/* --- REPLACED BUTTONS --- */}
+    
       <div className={styles.upgradeButtonsContainer}>
         {!upgradeInfo.isMaxLevel && !isGameOver && (
           <button

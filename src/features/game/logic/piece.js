@@ -9,12 +9,6 @@ import {
 
 import { isValidCell } from "./grid";
 
-// export const BlackPieceType = {
-//   BLACK_PAWN: "BlackPawn",
-//   BLACK_ROOK: "BlackRook",
-//   BLACK_BISHOP: "BlackBishop",
-//   BLACK_QUEEN: "BlackQueen",
-// };
 export const PawnTypes = [
   PieceType.PAWN_N,
   PieceType.PAWN_E,
@@ -46,10 +40,7 @@ export const PieceCooldown = {
   [PieceType.PAWN_W]: 2,
   [PieceType.PAWN_S]: 2,
 };
-
-// --- Helper Functions moved to top for clarity and safety ---
-
-function getPlusDirectionMovement(pos, playerPos, occupied) {
+function getPlusDirectionMovement(pos, playerPos, occupied,gridSize) {
   const moves = [];
   const directions = [
     { x: 0, y: 1 }, // Down
@@ -59,14 +50,14 @@ function getPlusDirectionMovement(pos, playerPos, occupied) {
   ];
   for (const dir of directions) {
     const targetPos = { x: pos.x + dir.x, y: pos.y + dir.y };
-    if (isValidCell(targetPos) && !arrayHasVector(occupied, targetPos)) {
+    if (isValidCell(targetPos,gridSize) && !arrayHasVector(occupied, targetPos)) {
       moves.push(targetPos);
     }
   }
   return moves;
 }
 
-function getPlusDirectionCaptures(pos, playerPos, occupied) {
+function getPlusDirectionCaptures(pos, playerPos, occupied,gridSize) {
   const captures = [];
   const directions = [
     { x: 0, y: 1 }, // Down
@@ -76,14 +67,14 @@ function getPlusDirectionCaptures(pos, playerPos, occupied) {
   ];
   for (const dir of directions) {
     const targetPos = { x: pos.x + dir.x, y: pos.y + dir.y };
-    if (isValidCell(targetPos) && arrayHasVector(occupied, targetPos)) {
+    if (isValidCell(targetPos,gridSize) && arrayHasVector(occupied, targetPos)) {
       captures.push(targetPos);
     }
   }
   return captures;
 }
 
-function getMoveCellsByOffset(piecePos, playerPos, obs, offsets) {
+function getMoveCellsByOffset(piecePos, playerPos, obs, offsets,gridSize) {
   assertIsVector(piecePos);
   assertIsVector(playerPos);
   const obstacles = removeVectorInArray(obs, playerPos);
@@ -92,21 +83,21 @@ function getMoveCellsByOffset(piecePos, playerPos, obs, offsets) {
   offsets.forEach((offset) => {
     assertIsVector(offset);
     const move = { x: origX + offset.x, y: origY + offset.y };
-    if (isValidCell(move) && !arrayHasVector(obstacles, move)) {
+    if (isValidCell(move,gridSize) && !arrayHasVector(obstacles, move)) {
       output.push(move);
     }
   });
   return output;
 }
 
-function getMoveCellsByDirection(piecePos, dirX, dirY, playerPos, obs) {
+function getMoveCellsByDirection(piecePos, dirX, dirY, playerPos, obs,gridSize) {
   assertIsVector(piecePos);
   assertIsVector(playerPos);
   const obstacles = removeVectorInArray(obs, playerPos);
   const { x: origX, y: origY } = piecePos;
   const output = [];
   const currCell = { x: origX + dirX, y: origY + dirY };
-  while (isValidCell(currCell) && !arrayHasVector(obstacles, currCell)) {
+  while (isValidCell(currCell,gridSize) && !arrayHasVector(obstacles, currCell)) {
     output.push({ ...currCell });
     currCell.x += dirX;
     currCell.y += dirY;
@@ -114,7 +105,7 @@ function getMoveCellsByDirection(piecePos, dirX, dirY, playerPos, obs) {
   return output;
 }
 
-function getCaptureCellsByOffset(piecePos, playerPos, obs, offsets) {
+function getCaptureCellsByOffset(piecePos, playerPos, obs, offsets,gridSize) {
   assertIsVector(piecePos);
   assertIsVector(playerPos);
   const { x: origX, y: origY } = piecePos;
@@ -122,21 +113,21 @@ function getCaptureCellsByOffset(piecePos, playerPos, obs, offsets) {
   offsets.forEach((offset) => {
     assertIsVector(offset);
     const move = { x: origX + offset.x, y: origY + offset.y };
-    if (isValidCell(move)) {
+    if (isValidCell(move,gridSize)) {
       output.push(move);
     }
   });
   return output;
 }
 
-function getCaptureCellsByDirection(piecePos, dirX, dirY, playerPos, obs) {
+function getCaptureCellsByDirection(piecePos, dirX, dirY, playerPos, obs,gridSize) {
   assertIsVector(piecePos);
   assertIsVector(playerPos);
   const obstacles = removeVectorInArray(obs, playerPos);
   const { x: origX, y: origY } = piecePos;
   const output = [];
   const currCell = { x: origX + dirX, y: origY + dirY };
-  while (isValidCell(currCell)) {
+  while (isValidCell(currCell,gridSize)) {
     output.push({ ...currCell });
     if (arrayHasVector(obstacles, currCell)) {
       break;
@@ -147,146 +138,150 @@ function getCaptureCellsByDirection(piecePos, dirX, dirY, playerPos, obs) {
   return output;
 }
 
-// --- Main Exported Objects ---
-
 export const PieceMovementFunc = {
   [BlackPieceType.BLACK_PAWN]: getPlusDirectionMovement,
-  [BlackPieceType.BLACK_ROOK]: (pos, playerPos, occupied) =>
+  [BlackPieceType.BLACK_ROOK]: (pos, playerPos, occupied,gridSize) =>
     [].concat(
-      getMoveCellsByDirection(pos, 1, 0, playerPos, occupied),
-      getMoveCellsByDirection(pos, 0, 1, playerPos, occupied),
-      getMoveCellsByDirection(pos, -1, 0, playerPos, occupied),
-      getMoveCellsByDirection(pos, 0, -1, playerPos, occupied)
+      getMoveCellsByDirection(pos, 1, 0, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, 0, 1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, -1, 0, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, 0, -1, playerPos, occupied,gridSize)
     ),
-  [BlackPieceType.BLACK_BISHOP]: (pos, playerPos, occupied) =>
+  [BlackPieceType.BLACK_BISHOP]: (pos, playerPos, occupied,gridSize) =>
     [].concat(
-      getMoveCellsByDirection(pos, 1, 1, playerPos, occupied),
-      getMoveCellsByDirection(pos, -1, 1, playerPos, occupied),
-      getMoveCellsByDirection(pos, -1, -1, playerPos, occupied),
-      getMoveCellsByDirection(pos, 1, -1, playerPos, occupied)
+      getMoveCellsByDirection(pos, 1, 1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, -1, 1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, -1, -1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, 1, -1, playerPos, occupied,gridSize)
     ),
-  [BlackPieceType.BLACK_QUEEN]: (pos, playerPos, occupied) =>
+  [BlackPieceType.BLACK_QUEEN]: (pos, playerPos, occupied,gridSize) =>
     [].concat(
-      getMoveCellsByDirection(pos, 1, 0, playerPos, occupied),
-      getMoveCellsByDirection(pos, 1, 1, playerPos, occupied),
-      getMoveCellsByDirection(pos, 0, 1, playerPos, occupied),
-      getMoveCellsByDirection(pos, -1, 1, playerPos, occupied),
-      getMoveCellsByDirection(pos, -1, 0, playerPos, occupied),
-      getMoveCellsByDirection(pos, -1, -1, playerPos, occupied),
-      getMoveCellsByDirection(pos, 0, -1, playerPos, occupied),
-      getMoveCellsByDirection(pos, 1, -1, playerPos, occupied)
+      getMoveCellsByDirection(pos, 1, 0, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, 1, 1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, 0, 1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, -1, 1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, -1, 0, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, -1, -1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, 0, -1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, 1, -1, playerPos, occupied,gridSize)
     ),
-  [PieceType.QUEEN]: (pos, playerPos, occupied) =>
+  [PieceType.QUEEN]: (pos, playerPos, occupied,gridSize) =>
     [].concat(
-      getMoveCellsByDirection(pos, 1, 0, playerPos, occupied),
-      getMoveCellsByDirection(pos, 1, 1, playerPos, occupied),
-      getMoveCellsByDirection(pos, 0, 1, playerPos, occupied),
-      getMoveCellsByDirection(pos, -1, 1, playerPos, occupied),
-      getMoveCellsByDirection(pos, -1, 0, playerPos, occupied),
-      getMoveCellsByDirection(pos, -1, -1, playerPos, occupied),
-      getMoveCellsByDirection(pos, 0, -1, playerPos, occupied),
-      getMoveCellsByDirection(pos, 1, -1, playerPos, occupied)
+      getMoveCellsByDirection(pos, 1, 0, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, 1, 1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, 0, 1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, -1, 1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, -1, 0, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, -1, -1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, 0, -1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, 1, -1, playerPos, occupied,gridSize)
     ),
-  [PieceType.ROOK]: (pos, playerPos, occupied) =>
+  [PieceType.ROOK]: (pos, playerPos, occupied,gridSize) =>
     [].concat(
-      getMoveCellsByDirection(pos, 1, 0, playerPos, occupied),
-      getMoveCellsByDirection(pos, 0, 1, playerPos, occupied),
-      getMoveCellsByDirection(pos, -1, 0, playerPos, occupied),
-      getMoveCellsByDirection(pos, 0, -1, playerPos, occupied)
+      getMoveCellsByDirection(pos, 1, 0, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, 0, 1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, -1, 0, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, 0, -1, playerPos, occupied,gridSize)
     ),
-  [PieceType.BISHOP]: (pos, playerPos, occupied) =>
+  [PieceType.BISHOP]: (pos, playerPos, occupied,gridSize) =>
     [].concat(
-      getMoveCellsByDirection(pos, 1, 1, playerPos, occupied),
-      getMoveCellsByDirection(pos, -1, 1, playerPos, occupied),
-      getMoveCellsByDirection(pos, -1, -1, playerPos, occupied),
-      getMoveCellsByDirection(pos, 1, -1, playerPos, occupied)
+      getMoveCellsByDirection(pos, 1, 1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, -1, 1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, -1, -1, playerPos, occupied,gridSize),
+      getMoveCellsByDirection(pos, 1, -1, playerPos, occupied,gridSize)
     ),
-  [PieceType.KNIGHT]: (pos, playerPos, occupied) =>
+  [PieceType.KNIGHT]: (pos, playerPos, occupied,gridSize) =>
     getMoveCellsByOffset(pos, playerPos, occupied, [
       { x: 1, y: 2 }, { x: 2, y: 1 }, { x: 2, y: -1 }, { x: 1, y: -2 },
       { x: -1, y: -2 }, { x: -2, y: -1 }, { x: -2, y: 1 }, { x: -1, y: 2 },
-    ]),
-  [PieceType.PAWN_N]: (pos, playerPos, occupied) =>
-    getMoveCellsByOffset(pos, playerPos, occupied, [{ x: 0, y: -1 }]),
-  [PieceType.PAWN_E]: (pos, playerPos, occupied) =>
-    getMoveCellsByOffset(pos, playerPos, occupied, [{ x: 1, y: 0 }]),
-  [PieceType.PAWN_W]: (pos, playerPos, occupied) =>
-    getMoveCellsByOffset(pos, playerPos, occupied, [{ x: -1, y: 0 }]),
-  [PieceType.PAWN_S]: (pos, playerPos, occupied) =>
-    getMoveCellsByOffset(pos, playerPos, occupied, [{ x: 0, y: 1 }]),
+    ],gridSize),
+  [PieceType.PAWN_N]: (pos, playerPos, occupied,gridSize) =>
+    getMoveCellsByOffset(pos, playerPos, occupied, [{ x: 0, y: -1 }],gridSize),
+  [PieceType.PAWN_E]: (pos, playerPos, occupied,gridSize) =>
+    getMoveCellsByOffset(pos, playerPos, occupied, [{ x: 1, y: 0 }],gridSize),
+  [PieceType.PAWN_W]: (pos, playerPos, occupied,gridSize) =>
+    getMoveCellsByOffset(pos, playerPos, occupied, [{ x: -1, y: 0 }],gridSize),
+  [PieceType.PAWN_S]: (pos, playerPos, occupied,gridSize) =>
+    getMoveCellsByOffset(pos, playerPos, occupied, [{ x: 0, y: 1 }],gridSize),
 };
 
 export const PieceCaptureFunc = {
   [BlackPieceType.BLACK_PAWN]: getPlusDirectionCaptures,
-  [BlackPieceType.BLACK_ROOK]: (pos, playerPos, occupied) =>
+  [BlackPieceType.BLACK_ROOK]: (pos, playerPos, occupied,gridSize) =>
     [].concat(
-      getCaptureCellsByDirection(pos, 1, 0, playerPos, occupied),
-      getCaptureCellsByDirection(pos, 0, 1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, -1, 0, playerPos, occupied),
-      getCaptureCellsByDirection(pos, 0, -1, playerPos, occupied)
+      getCaptureCellsByDirection(pos, 1, 0, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, 0, 1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, -1, 0, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, 0, -1, playerPos, occupied,gridSize)
     ),
-  [BlackPieceType.BLACK_BISHOP]: (pos, playerPos, occupied) =>
+  [BlackPieceType.BLACK_BISHOP]: (pos, playerPos, occupied,gridSize) =>
     [].concat(
-      getCaptureCellsByDirection(pos, 1, 1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, -1, 1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, -1, -1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, 1, -1, playerPos, occupied)
+      getCaptureCellsByDirection(pos, 1, 1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, -1, 1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, -1, -1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, 1, -1, playerPos, occupied,gridSize)
     ),
-  [BlackPieceType.BLACK_QUEEN]: (pos, playerPos, occupied) =>
+  [BlackPieceType.BLACK_QUEEN]: (pos, playerPos, occupied,gridSize) =>
     [].concat(
-      getCaptureCellsByDirection(pos, 1, 0, playerPos, occupied),
-      getCaptureCellsByDirection(pos, 1, 1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, 0, 1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, -1, 1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, -1, 0, playerPos, occupied),
-      getCaptureCellsByDirection(pos, -1, -1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, 0, -1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, 1, -1, playerPos, occupied)
+      getCaptureCellsByDirection(pos, 1, 0, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, 1, 1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, 0, 1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, -1, 1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, -1, 0, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, -1, -1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, 0, -1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, 1, -1, playerPos, occupied,gridSize)
     ),
-  [PieceType.QUEEN]: (pos, playerPos, occupied) =>
+  [PieceType.QUEEN]: (pos, playerPos, occupied,gridSize) =>
     [].concat(
-      getCaptureCellsByDirection(pos, 1, 0, playerPos, occupied),
-      getCaptureCellsByDirection(pos, 1, 1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, 0, 1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, -1, 1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, -1, 0, playerPos, occupied),
-      getCaptureCellsByDirection(pos, -1, -1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, 0, -1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, 1, -1, playerPos, occupied)
+      getCaptureCellsByDirection(pos, 1, 0, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, 1, 1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, 0, 1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, -1, 1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, -1, 0, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, -1, -1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, 0, -1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, 1, -1, playerPos, occupied,gridSize)
     ),
-  [PieceType.ROOK]: (pos, playerPos, occupied) =>
+  [PieceType.ROOK]: (pos, playerPos, occupied,gridSize) =>
     [].concat(
-      getCaptureCellsByDirection(pos, 1, 0, playerPos, occupied),
-      getCaptureCellsByDirection(pos, 0, 1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, -1, 0, playerPos, occupied),
-      getCaptureCellsByDirection(pos, 0, -1, playerPos, occupied)
+      getCaptureCellsByDirection(pos, 1, 0, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, 0, 1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, -1, 0, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, 0, -1, playerPos, occupied,gridSize)
     ),
-  [PieceType.BISHOP]: (pos, playerPos, occupied) =>
+  [PieceType.BISHOP]: (pos, playerPos, occupied,gridSize) =>
     [].concat(
-      getCaptureCellsByDirection(pos, 1, 1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, -1, 1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, -1, -1, playerPos, occupied),
-      getCaptureCellsByDirection(pos, 1, -1, playerPos, occupied)
+      getCaptureCellsByDirection(pos, 1, 1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, -1, 1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, -1, -1, playerPos, occupied,gridSize),
+      getCaptureCellsByDirection(pos, 1, -1, playerPos, occupied,gridSize)
     ),
-  [PieceType.KNIGHT]: (pos, playerPos, occupied) =>
+  [PieceType.KNIGHT]: (pos, playerPos, occupied,gridSize) =>
     getCaptureCellsByOffset(pos, playerPos, occupied, [
       { x: 1, y: 2 }, { x: 2, y: 1 }, { x: 2, y: -1 }, { x: 1, y: -2 },
       { x: -1, y: -2 }, { x: -2, y: -1 }, { x: -2, y: 1 }, { x: -1, y: 2 },
-    ]),
-  [PieceType.PAWN_N]: (pos, playerPos, occupied) =>
+    ],gridSize),
+  [PieceType.PAWN_N]: (pos, playerPos, occupied,gridSize) =>
     getCaptureCellsByOffset(pos, playerPos, occupied, [
       { x: -1, y: -1 }, { x: 1, y: -1 },
-    ]),
-  [PieceType.PAWN_E]: (pos, playerPos, occupied) =>
+    ],gridSize),
+  [PieceType.PAWN_E]: (pos, playerPos, occupied,gridSize) =>
     getCaptureCellsByOffset(pos, playerPos, occupied, [
       { x: 1, y: -1 }, { x: 1, y: 1 },
-    ]),
-  [PieceType.PAWN_W]: (pos, playerPos, occupied) =>
+    ],gridSize),
+  [PieceType.PAWN_W]: (pos, playerPos, occupied,gridSize) =>
     getCaptureCellsByOffset(pos, playerPos, occupied, [
       { x: -1, y: -1 }, { x: -1, y: 1 },
-    ]),
-  [PieceType.PAWN_S]: (pos, playerPos, occupied) =>
+    ],gridSize),
+  [PieceType.PAWN_S]: (pos, playerPos, occupied,gridSize) =>
     getCaptureCellsByOffset(pos, playerPos, occupied, [
       { x: -1, y: 1 }, { x: 1, y: 1 },
-    ]),
+    ],gridSize),
 };
+
+Object.freeze(PawnTypes);
+Object.freeze(OfficerTypes);
+Object.freeze(PieceCooldown);
+Object.freeze(PieceMovementFunc);
+Object.freeze(PieceCaptureFunc);

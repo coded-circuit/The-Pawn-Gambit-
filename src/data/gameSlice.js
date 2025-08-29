@@ -1,5 +1,6 @@
 import { createSlice, nanoid } from "@reduxjs/toolkit";
-import { arrayHasVector, assert, extractOccupiedCells, BlackPieceType } from "../global/utils";
+import { Difficulty,arrayHasVector, assert, extractOccupiedCells, BlackPieceType } from "../global/utils";
+import { generateGrid } from "../features/game/logic/grid";
 import {
   OfficerTypes,
   PawnTypes,
@@ -16,8 +17,11 @@ import {
 import { getNumberToSpawn, getPieceWithPos } from "../features/game/logic/spawning";
 
 export const playerCaptureCooldown = 6;
-const playerSpawnPos = { x: 3, y: 4 };
+const initialGridSize = 8;
+const playerSpawnPos = { x: Math.floor(initialGridSize / 2) - 1, y: Math.floor(initialGridSize / 2) };
+// const playerSpawnPos = { x: 3, y: 4 };
 const initialState = {
+  gridSize: initialGridSize,
   pieces: {},
   player: {
     position: { ...playerSpawnPos },
@@ -26,7 +30,8 @@ const initialState = {
   },
   movingPieces: {},
   captureCells: [],
-  occupiedCellsMatrix: new Array(8).fill(null).map(() => new Array(8).fill(false)),
+  occupiedCellsMatrix: generateGrid(initialGridSize),
+  // occupiedCellsMatrix: new Array(8).fill(null).map(() => new Array(8).fill(false)),
   queuedForDeletion: [],
   turnNumber: 0,
   xp: 0,
@@ -45,6 +50,34 @@ const gameSlice = createSlice({
   name: "game",
   initialState,
   reducers: {
+    startGame: (state, action) => {
+      const difficulty = action.payload.difficulty;
+      const gridSize = difficulty === Difficulty.INSANE ? 10 : 8;
+      const spawnPos = { x: Math.floor(gridSize / 2) - 1, y: Math.floor(gridSize / 2) };
+
+      // Build a fresh state from scratch for reliability
+      state.gridSize = gridSize;
+      state.pieces = {};
+      state.player = {
+        position: spawnPos,
+        type: BlackPieceType.BLACK_PAWN,
+        captureCooldownLeft: playerCaptureCooldown,
+      };
+      state.movingPieces = {};
+      state.captureCells = [];
+      state.occupiedCellsMatrix = generateGrid(gridSize); // Create a clean grid
+      state.queuedForDeletion = [];
+      state.turnNumber = 0;
+      state.xp = 0;
+      state.gems = 0;
+      state.livesLeft =4;
+      state.isGameOver = false;
+      // Note: We carry over livesLeft, totalXP, etc. from the initial state or previous games
+      state.playerPieceType = BlackPieceType.BLACK_PAWN;
+      
+      // CRITICAL STEP: Place the player on the new, clean matrix
+      state.occupiedCellsMatrix[spawnPos.y][spawnPos.x] = "ThePlayer";
+    },
     resetState: () => initialState,
 
     addXP: (state, action) => { state.xp += action.payload; },
@@ -98,9 +131,10 @@ const gameSlice = createSlice({
           return;
         }
 
-        const occupied = extractOccupiedCells(state.occupiedCellsMatrix);
-        const validMoves = PieceMovementFunc[state.playerPieceType](currentPos, currentPos, occupied);
-        const validCaptures = PieceCaptureFunc[state.playerPieceType](currentPos, currentPos, occupied);
+        // const occupied = extractOccupiedCells(state.occupiedCellsMatrix);
+        const occupied = extractOccupiedCells(state.occupiedCellsMatrix, state.gridSize);
+        const validMoves = PieceMovementFunc[state.playerPieceType](currentPos, currentPos, occupied , state.gridSize);
+        const validCaptures = PieceCaptureFunc[state.playerPieceType](currentPos, currentPos, occupied,state.gridSize);
         
         const isValid = 
           (!isCapturing && arrayHasVector(validMoves, targetPos)) || 
@@ -152,7 +186,8 @@ const gameSlice = createSlice({
       const difficulty = action?.payload?.difficulty;
       const toSpawn = getNumberToSpawn(difficulty);
       for (let i = 0; i < toSpawn; i += 1) {
-        const { type, pos } = getPieceWithPos(difficulty);
+        // const { type, pos } = getPieceWithPos(difficulty);
+        const { type, pos } = getPieceWithPos(difficulty, state.gridSize);
         if (!state.occupiedCellsMatrix[pos.y][pos.x]) {
           const { pieceId, newPiece } = createPiece(pos.x, pos.y, type);
           state.pieces[pieceId] = newPiece;
@@ -161,7 +196,8 @@ const gameSlice = createSlice({
       }
 
       // Enemy capture step: if any enemy can capture the player, move onto the player's square and end the game.
-      const occupied = extractOccupiedCells(state.occupiedCellsMatrix);
+      // const occupied = extractOccupiedCells(state.occupiedCellsMatrix);
+      const occupied = extractOccupiedCells(state.occupiedCellsMatrix, state.gridSize);
       const playerPos = state.player.position;
       let playerCaptured = false;
       for (const [pieceId, p] of Object.entries(state.pieces)) {
@@ -172,7 +208,7 @@ const gameSlice = createSlice({
           p.cooldown -= 1;
           continue;
         }
-        const captures = PieceCaptureFunc[p.type](p.position, playerPos, occupied);
+        const captures = PieceCaptureFunc[p.type](p.position, playerPos, occupied,state.gridSize);
         if (captures.some((c) => c.x === playerPos.x && c.y === playerPos.y)) {
           // Move this piece onto the player's square and end the game
           moveOccupiedCell(state, p.position, playerPos, pieceId);
@@ -188,12 +224,13 @@ const gameSlice = createSlice({
     },
     updateCaptureTiles: (state) => {
       // Compute all enemy capture tiles for UI and threat detection
-      const occupied = extractOccupiedCells(state.occupiedCellsMatrix);
+      // const occupied = extractOccupiedCells(state.occupiedCellsMatrix);
+      const occupied = extractOccupiedCells(state.occupiedCellsMatrix, state.gridSize);
       const playerPos = state.player.position;
       const captures = [];
       Object.values(state.pieces).forEach((p) => {
         if (p.isCaptured) return;
-        const caps = PieceCaptureFunc[p.type](p.position, playerPos, occupied);
+        const caps = PieceCaptureFunc[p.type](p.position, playerPos, occupied,state.gridSize);
         captures.push(...caps);
       });
       // Deduplicate
@@ -214,7 +251,7 @@ const gameSlice = createSlice({
 });
 
 export const {
-  resetState, addXP, endGame, restartGame, upgradePlayerPiece,
+  startGame,resetState, addXP, endGame, restartGame, upgradePlayerPiece,
   movePlayer, addPiece, processPieces, updateCaptureTiles,
 } = gameSlice.actions;
 
@@ -232,7 +269,7 @@ export const selectTotalXP = (state) => state.game.totalXP;
 export const selectTotalGems = (state) => state.game.totalGems;
 export const selectTotalTurnsSurvived = (state) => state.game.totalTurnsSurvived;
 export const selectPlayerPieceType = (state) => state.game.playerPieceType;
-
+export const selectGridSize = (state) => state.game.gridSize;
 export default gameSlice.reducer;
 
 function moveOccupiedCell(state, v1, v2, pieceId) {

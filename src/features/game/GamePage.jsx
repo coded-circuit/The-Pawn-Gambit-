@@ -5,9 +5,7 @@ import {
   endGame,
   movePlayer,
   playerCaptureCooldown,
-  processPieces,
-  resetState,
-  updateCaptureTiles,
+  processPieces, selectPlayerPosition, updateCaptureTiles,
 } from "../../data/gameSlice";
 import GridCell from "./components/grid-cell/GridCell";
 import Piece from "./components/piece/Piece";
@@ -28,8 +26,6 @@ const GamePage = () => {
     pieces,
     occupiedCellsMatrix,
     captureCells,
-    playerPosition,
-    playerCooldownLeft,
     turnNumber,
     xp,
     gems,
@@ -39,13 +35,16 @@ const GamePage = () => {
     totalXP,
     totalGems,
     totalTurnsSurvived,
-  } = useSelector((state) => state.game);
+    gridSize,
+    player,
+  } = useSelector((state) => (state.game));
   const difficulty = useSelector(selectDifficulty);
+  const playerPosition = useSelector(selectPlayerPosition);
   const [potentialMoves, setPotentialMoves] = useState([]);
 
-  useEffect(() => {
-    dispatch(resetState());
-  }, [dispatch]);
+  // useEffect(() => {
+  //   dispatch(resetState());
+  // }, [dispatch]);
   useEffect(() => {
     if (isGameOver) return;
     const intervalId = setInterval(() => {
@@ -60,8 +59,8 @@ const GamePage = () => {
       return;
     }
     const occupied = extractOccupiedCells(occupiedCellsMatrix);
-    const moves = PieceMovementFunc[playerPieceType](playerPosition, playerPosition, occupied);
-    const captures = PieceCaptureFunc[playerPieceType](playerPosition, playerPosition, occupied);
+    const moves = PieceMovementFunc[playerPieceType](playerPosition, playerPosition, occupied,gridSize);
+    const captures = PieceCaptureFunc[playerPieceType](playerPosition, playerPosition, occupied,gridSize);
     setPotentialMoves([...moves, ...captures]);
   }, [playerPosition, playerPieceType, occupiedCellsMatrix, isGameOver]);
 
@@ -94,15 +93,15 @@ const GamePage = () => {
       )) : [],
     [pieces]
   );
-
   const gridCellComponents = useMemo(() => {
-    return Array.from({ length: 64 }, (_, i) => {
-      const x = i % 8;
-      const y = Math.floor(i / 8);
+  const cells = [];
+    for (let i = 0; i < gridSize * gridSize; i++) {
+      const x = i % gridSize;
+      const y = Math.floor(i / gridSize);
       const pos = { x, y };
       const isPotentialMove = arrayHasVector(potentialMoves, pos);
 
-      return (
+      cells.push(
         <GridCell
           key={`${x}-${y}`}
           pos={pos}
@@ -111,9 +110,9 @@ const GamePage = () => {
           isPotentialMove={isPotentialMove}
         />
       );
-    });
-  }, [potentialMoves, captureCells]);
-  
+    }
+    return cells;
+  }, [gridSize, potentialMoves, captureCells]);
 
   return (
     <main>
@@ -126,15 +125,15 @@ const GamePage = () => {
         totalGems={totalGems}
         totalTurnsSurvived={totalTurnsSurvived}
         captureCooldownPercent={
-          (1 - playerCooldownLeft / playerCaptureCooldown) * 100
+          (1 - (player?.captureCooldownLeft ?? 0) / playerCaptureCooldown) * 100
         }
         isGameOver={isGameOver}
         playerPieceType={playerPieceType}
       />
       <div className={styles.graphicsGridBorder}></div>
       <div className={styles.graphicsGridTrunk}></div>
-      <div className={styles.gridContainer}>{gridCellComponents}</div>
-      <div className={styles.piecesContainer}>
+      <div className={styles.gridContainer }style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)`,'--grid-size': String(gridSize) }}>{gridCellComponents}</div>
+      <div className={styles.piecesContainer} style={{ '--grid-size': String(gridSize) }}>
         
           <Piece
             gridPos={playerPosition}

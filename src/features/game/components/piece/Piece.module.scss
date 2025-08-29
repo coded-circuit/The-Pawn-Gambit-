@@ -1,7 +1,7 @@
 .piece {
   position: absolute;
-  width: calc(theme.$grid-scale / 8);
-  height: calc(theme.$grid-scale / 8);
+  width: calc(theme.$grid-scale / var(--grid-size,8));
+  height: calc(theme.$grid-scale / var(--grid-size, 8));
   transition: all 0.2s;
 }
 

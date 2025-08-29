@@ -28,6 +28,7 @@ export const Difficulty = {
   EASY: 0,
   NORMAL: 1,
   HARD: 2,
+  INSANE: 3,
 };
 
 Object.freeze(PieceType);
@@ -83,10 +84,10 @@ export function assertIsVector(vector) {
   );
 }
 
-export function extractOccupiedCells(matrix) {
+export function extractOccupiedCells(matrix, gridSize) {
   const output = [];
-  for (let y = 0; y < 8; y++) {
-    for (let x = 0; x < 8; x++) {
+  for (let y = 0; y < gridSize; y++) {
+    for (let x = 0; x < gridSize; x++) {
       if (matrix[y][x] !== false) {
         output.push({ x, y });
       }

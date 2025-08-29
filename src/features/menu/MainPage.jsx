@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch,useSelector } from "react-redux";
+import { startGame } from "../../data/gameSlice";
 import { switchPage } from "../../data/menuSlice";
-import { PageName, TRANSITION_HALF_LIFE, sleep } from "../../global/utils";
+import { Difficulty,PageName, TRANSITION_HALF_LIFE, sleep } from "../../global/utils";
 import styles from "./MainPage.module.scss";
 
 import Logo from "./components/Logo";
@@ -9,7 +10,15 @@ import Logo from "./components/Logo";
 const MainPage = () => {
   const [disabled, setDisabled] = useState(true);
   const [hasClicked, setHasClicked] = useState(false);
+  const currentDifficulty = useSelector((state) => state.menu.settings.difficulty);
   const dispatch = useDispatch();
+  const handleTournamentClick = () => {
+    if (hasClicked) return;
+    // Always starts the game on INSANE difficulty
+    dispatch(startGame({ difficulty: Difficulty.INSANE }));
+    dispatch(switchPage(PageName.GAME));
+    setHasClicked(true);
+  };
 
   useEffect(() => {
     (async () => {
@@ -31,20 +40,17 @@ const MainPage = () => {
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             if (hasClicked) return;
+            dispatch(startGame({difficulty:currentDifficulty}))
             dispatch(switchPage(PageName.GAME));
             setHasClicked(true);
           }}
           disabled={disabled}
         >
-          SINGLE PLAYER
+          PRACTICE
         </button>
         <button className={`${styles.cta} ${styles.primary}`}
           onMouseDown={(e) => e.preventDefault()}
-          onClick={() => {  
-            if (hasClicked) return;
-            dispatch(switchPage(PageName.GAME));
-            setHasClicked(true);
-          }}
+          onClick={handleTournamentClick}
           disabled={disabled}
         >
           TOURNAMENT
