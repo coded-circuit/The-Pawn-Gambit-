@@ -16,6 +16,7 @@ export const BlackPieceType = {
   BLACK_ROOK: "BlackRook",
   BLACK_BISHOP: "BlackBishop",
   BLACK_QUEEN: "BlackQueen",
+  BLACK_KNIGHT: "BlackKnight",
 };
 export const PageName = {
   MAIN_MENU: 0,
@@ -23,12 +24,15 @@ export const PageName = {
   HOW_TO_PLAY: 2,
   OPTIONS: 3,
   CREDITS: 4,
+  TOURNAMENT_LOGIN:5,
+  TOURNAMENT_ROUNDS:6,
 };
 export const Difficulty = {
   EASY: 0,
   NORMAL: 1,
   HARD: 2,
   INSANE: 3,
+  DUOS : 4,
 };
 
 Object.freeze(PieceType);

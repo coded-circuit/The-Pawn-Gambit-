@@ -8,7 +8,8 @@ import OptionsPage from "./features/menu/OptionsPage";
 import HowToPlayPage from "./features/menu/HowToPlayPage";
 import PageTransition from "./features/menu/PageTransition";
 import GamePage from "./features/game/GamePage";
-
+import TournamentRoundsPage from "./features/menu/TournamentRoundsPage";
+import TournamentLoginPage from "./features/menu/TournamentLoginPage";
 function App() {
   const currentPage = useSelector(selectPage);
   const [pageElement, setPageElement] = useState();
@@ -46,10 +47,24 @@ function App() {
           await sleep(TRANSITION_HALF_LIFE);
           setTransitionElement();
           break;
-        case PageName.CREDITS:
+        // case PageName.CREDITS:
+        //   setTransitionElement(<PageTransition />);
+        //   await sleep(TRANSITION_HALF_LIFE);
+        //   setPageElement(<Credits />);
+        //   await sleep(TRANSITION_HALF_LIFE);
+        //   setTransitionElement();
+        //   break;
+        case PageName.TOURNAMENT_LOGIN:
           setTransitionElement(<PageTransition />);
           await sleep(TRANSITION_HALF_LIFE);
-          setPageElement(<Credits />);
+          setPageElement(<TournamentLoginPage />);
+          await sleep(TRANSITION_HALF_LIFE);
+          setTransitionElement();
+          break;
+        case PageName.TOURNAMENT_ROUNDS:
+          setTransitionElement(<PageTransition />);
+          await sleep(TRANSITION_HALF_LIFE);
+          setPageElement(<TournamentRoundsPage />);
           await sleep(TRANSITION_HALF_LIFE);
           setTransitionElement();
           break;

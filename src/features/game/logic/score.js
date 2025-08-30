@@ -29,7 +29,8 @@ const difficultyMultiplier = {
   [Difficulty.EASY]: 1.0,
   [Difficulty.NORMAL]: 1.5,
   [Difficulty.HARD]: 2.0,
-  [Difficulty.INSANE]: 2.5,
+  [Difficulty.INSANE]: 2.0,
+  [Difficulty.DUOS]: 2.0,
 };
 const survivalGemReward = 1;
 const pieceCaptureGemReward = {
@@ -37,6 +38,7 @@ const pieceCaptureGemReward = {
   [BlackPieceType.BLACK_BISHOP]: null,
   [BlackPieceType.BLACK_QUEEN]: null,
   [BlackPieceType.BLACK_ROOK]: null,
+  [BlackPieceType.BLACK_KNIGHT]: null,
   [PieceType.QUEEN]: 5,
   [PieceType.ROOK]: 4,
   [PieceType.BISHOP]: 4,

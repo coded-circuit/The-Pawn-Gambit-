@@ -9,6 +9,7 @@ import BlackBishop from "./Players/BlackBishopSvg";
 import BlackPawn from "./Players/BlackPawnSvg";
 import BlackQueen from "./Players/BlackQueen";
 import BlackRook from "./Players/BlackRook";
+import BlackKnight from "./Players/BlackKnightSvg";
 import Bishop from "./BishopSvg";
 import Knight from "./KnightSvg";
 import Pawn from "./PawnSvg";
@@ -19,13 +20,17 @@ import Shadow from "./ShadowSvg";
 import { useSelector } from "react-redux";
 
 
-const Piece = ({ gridPos, type, isCaptured }) => {
+const Piece = ({ gridPos, type, isCaptured, cooldownLeft: cooldownLeftProp }) => {
   // Always select the player's position (used as a fallback only)
   const playerGridPos = useSelector(selectPlayerPosition);
   const gridSize = useSelector(selectGridSize);
+  const playerCaptureCooldownLeft = useSelector((state) => state.game.player?.captureCooldownLeft);
   // Prefer the provided gridPos (for enemies and explicitly passed cases),
   // otherwise fall back to the player's position (for the player's own piece).
   const effectivePos = gridPos ?? playerGridPos;
+
+  // Derive a cooldownLeft value: prefer prop, then fallback to player's cooldown, else 0
+  const cooldownLeft = cooldownLeftProp ?? playerCaptureCooldownLeft ?? 0;
 
   // --- Hooks are now correctly called at the top ---
   const [isMoving, setIsMoving] = useState(false);
@@ -57,6 +62,7 @@ const Piece = ({ gridPos, type, isCaptured }) => {
     case BlackPieceType.BLACK_PAWN: pieceComponent = <BlackPawn />; break;
     case BlackPieceType.BLACK_ROOK: pieceComponent = <BlackRook />; break;
     case BlackPieceType.BLACK_BISHOP: pieceComponent = <BlackBishop />; break;
+    case BlackPieceType.BLACK_KNIGHT: pieceComponent = <BlackKnight />; break;
     case BlackPieceType.BLACK_QUEEN: pieceComponent = <BlackQueen />; break;
     case PieceType.QUEEN: pieceComponent = <Queen />; break;
     case PieceType.ROOK: pieceComponent = <Rook />; break;
@@ -97,6 +103,7 @@ Piece.propTypes = {
   }),
   type: PropTypes.string,
   isCaptured: PropTypes.bool,
+  cooldownLeft: PropTypes.number,
 };
 
 export default Piece;

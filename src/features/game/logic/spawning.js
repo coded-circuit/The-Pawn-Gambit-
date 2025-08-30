@@ -48,6 +48,16 @@ const weightedPieceProbabilities = {
     { type: PieceType.PAWN_E, weight: 0.0625 },
     { type: PieceType.PAWN_W, weight: 0.0625 },
   ],
+  [Difficulty.DUOS]: [ 
+    { type: PieceType.QUEEN, weight: 0.15 },
+    { type: PieceType.ROOK, weight: 0.15 },
+    { type: PieceType.BISHOP, weight: 0.2 },
+    { type: PieceType.KNIGHT, weight: 0.25 }, 
+    { type: PieceType.PAWN_N, weight: 0.0625 },
+    { type: PieceType.PAWN_S, weight: 0.0625 },
+    { type: PieceType.PAWN_E, weight: 0.0625 },
+    { type: PieceType.PAWN_W, weight: 0.0625 },  
+  ],
 };
 
 const edgeToPawns = [
@@ -74,6 +84,10 @@ export function getNumberToSpawn(difficulty) {
       if (rand < 0.5) return 1;
       return 0;
     case Difficulty.INSANE:
+      // Increased frequency: 60% chance for 2 pieces, 40% for 1.
+      if (rand < 0.6) return 2;
+      return 1;
+    case Difficulty.DUOS:
       // Increased frequency: 60% chance for 2 pieces, 40% for 1.
       if (rand < 0.6) return 2;
       return 1;

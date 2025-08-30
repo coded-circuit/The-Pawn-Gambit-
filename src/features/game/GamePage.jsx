@@ -5,7 +5,7 @@ import {
   endGame,
   movePlayer,
   playerCaptureCooldown,
-  processPieces, selectPlayerPosition, updateCaptureTiles,
+  processPieces, selectPlayerPosition, updateCaptureTiles,selectPlayer2Position,
 } from "../../data/gameSlice";
 import GridCell from "./components/grid-cell/GridCell";
 import Piece from "./components/piece/Piece";
@@ -37,21 +37,41 @@ const GamePage = () => {
     totalTurnsSurvived,
     gridSize,
     player,
+    player2,
   } = useSelector((state) => (state.game));
   const difficulty = useSelector(selectDifficulty);
   const playerPosition = useSelector(selectPlayerPosition);
+  const player2Position = useSelector(selectPlayer2Position);
   const [potentialMoves, setPotentialMoves] = useState([]);
 
   // useEffect(() => {
   //   dispatch(resetState());
   // }, [dispatch]);
   useEffect(() => {
-    if (isGameOver) return;
-    const intervalId = setInterval(() => {
-      dispatch(addXP(getPerSecondXPIncrease(difficulty)));
-    }, 1000);
-    return () => clearInterval(intervalId);
-  }, [isGameOver, difficulty, dispatch]);
+    if (isGameOver ||  (!playerPosition && !player2Position)) {
+      setPotentialMoves([]);
+      return;
+    }
+     const occupied = extractOccupiedCells(occupiedCellsMatrix);
+    const moves = [];
+    const addMoves = (pos) => {
+      const m = PieceMovementFunc[playerPieceType](pos, pos, occupied, gridSize);
+      const c = PieceCaptureFunc[playerPieceType](pos, pos, occupied, gridSize);
+      moves.push(...m, ...c);
+    };
+    if (playerPosition && player?.isAlive !== false) addMoves(playerPosition);
+    if (player2Position && player2?.isAlive) addMoves(player2Position);
+
+    // Dedup
+    const seen = new Set();
+    const uniq = moves.filter(v => {
+      const k = `${v.x},${v.y}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    setPotentialMoves(uniq);
+  },[playerPosition, player2Position, playerPieceType, occupiedCellsMatrix, isGameOver, player?.isAlive, player2?.isAlive, gridSize]);
 
   useEffect(() => {
     if (isGameOver || !playerPosition) {
@@ -64,10 +84,28 @@ const GamePage = () => {
     setPotentialMoves([...moves, ...captures]);
   }, [playerPosition, playerPieceType, occupiedCellsMatrix, isGameOver]);
 
-  const handleCellClick = (pos) => {
+    const handleCellClick = (pos) => {
     if (isGameOver) return;
-    const isCapturing = occupiedCellsMatrix[pos.y][pos.x] !== false;
-    dispatch(movePlayer({ targetPos: pos, isCapturing, difficulty }));
+
+    const cellVal = occupiedCellsMatrix[pos.y][pos.x];
+    const isFriendly = cellVal === "ThePlayer" || cellVal === "ThePlayer2";
+    const isCapturing = cellVal !== false && !isFriendly;
+
+    const occupied = extractOccupiedCells(occupiedCellsMatrix);
+    const canP1 = playerPosition && player?.isAlive !== false &&
+      (arrayHasVector(PieceMovementFunc[playerPieceType](playerPosition, playerPosition, occupied, gridSize), pos) ||
+       arrayHasVector(PieceCaptureFunc[playerPieceType](playerPosition, playerPosition, occupied, gridSize), pos));
+
+    const canP2 = player2Position && player2?.isAlive &&
+      (arrayHasVector(PieceMovementFunc[playerPieceType](player2Position, player2Position, occupied, gridSize), pos) ||
+       arrayHasVector(PieceCaptureFunc[playerPieceType](player2Position, player2Position, occupied, gridSize), pos));
+
+    let which = 0;
+    if (canP1) which = 1;
+    else if (canP2) which = 2;
+    else return;
+
+    dispatch(movePlayer({ which, targetPos: pos, isCapturing, difficulty }));
 
     setTimeout(() => {
       dispatch(processPieces({ difficulty }));
@@ -79,7 +117,6 @@ const GamePage = () => {
       }
     }, 100);
   };
-
   const pieceComponents = useMemo(
     () =>
       pieces ? Object.keys(pieces).map((pieceId) => (
@@ -133,13 +170,21 @@ const GamePage = () => {
       <div className={styles.graphicsGridBorder}></div>
       <div className={styles.graphicsGridTrunk}></div>
       <div className={styles.gridContainer }style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)`,'--grid-size': String(gridSize) }}>{gridCellComponents}</div>
-      <div className={styles.piecesContainer} style={{ '--grid-size': String(gridSize) }}>
-        
+          <div className={styles.piecesContainer} style={{ '--grid-size': String(gridSize) }}>
           <Piece
             gridPos={playerPosition}
             type={playerPieceType}
-            isCaptured={isGameOver}
+            isCaptured={isGameOver || player?.isAlive === false}
+            cooldownLeft={player?.captureCooldownLeft ?? 0}
           />
+          {player2 && (
+            <Piece
+              gridPos={player2.position}
+              type={playerPieceType}
+              isCaptured={isGameOver || player2.isAlive === false}
+              cooldownLeft={player2.captureCooldownLeft ?? 0}
+            />
+          )}
         {pieceComponents}
       </div>
     </main>

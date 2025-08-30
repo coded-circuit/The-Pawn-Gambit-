@@ -46,13 +46,16 @@ const GameUI = ({
 
   switch (playerPieceType) {
     case BlackPieceType.BLACK_PAWN:
-      upgradeInfo = { cost: 10, nextPieceName: "Rook", isMaxLevel: false };
+      upgradeInfo = { cost: 10, nextPieceName: "Knight", isMaxLevel: false };
+      break;
+    case BlackPieceType.BLACK_KNIGHT:
+      upgradeInfo = { cost: 20, nextPieceName: "Rook", isMaxLevel: false };
       break;
     case BlackPieceType.BLACK_ROOK:
-      upgradeInfo = { cost: 20, nextPieceName: "Bishop", isMaxLevel: false };
+      upgradeInfo = { cost: 30, nextPieceName: "Bishop", isMaxLevel: false };
       break;
     case BlackPieceType.BLACK_BISHOP:
-      upgradeInfo = { cost: 30, nextPieceName: "Queen", isMaxLevel: false };
+      upgradeInfo = { cost: 40, nextPieceName: "Queen", isMaxLevel: false };
       break;
     default:
       // Player is a Queen or other, button will not render.

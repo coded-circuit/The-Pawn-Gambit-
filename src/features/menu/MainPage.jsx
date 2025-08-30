@@ -48,14 +48,25 @@ const MainPage = () => {
         >
           PRACTICE
         </button>
-        <button className={`${styles.cta} ${styles.primary}`}
+        {/* <button className={`${styles.cta} ${styles.primary}`}
           onMouseDown={(e) => e.preventDefault()}
           onClick={handleTournamentClick}
           disabled={disabled}
         >
           TOURNAMENT
-        </button>
+        </button> */}
         <button className={`${styles.cta} ${styles.primary}`}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            if (hasClicked) return;
+            dispatch(switchPage(PageName.TOURNAMENT_LOGIN));
+            setHasClicked(true);
+          }}
+          disabled={disabled}
+        >
+          TOURNAMENT
+        </button>
+        {/* <button className={`${styles.cta} ${styles.primary}`}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             if (hasClicked) return;
@@ -65,8 +76,8 @@ const MainPage = () => {
           disabled={disabled}
         >
           HOW TO PLAY
-        </button>
-        <button className={`${styles.cta} ${styles.primary}`}
+        </button> */}
+        {/* <button className={`${styles.cta} ${styles.primary}`}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             if (hasClicked) return;
@@ -76,7 +87,7 @@ const MainPage = () => {
           disabled={disabled}
         >
           OPTIONS
-        </button>
+        </button> */}
         </div>
         
         </section>

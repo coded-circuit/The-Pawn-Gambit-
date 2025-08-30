@@ -24,6 +24,7 @@ export const OfficerTypes = [
   BlackPieceType.BLACK_QUEEN,
   BlackPieceType.BLACK_ROOK,
   BlackPieceType.BLACK_BISHOP,
+  BlackPieceType.BLACK_KNIGHT,
 ];
 export const PieceCooldown = {
   // [PieceType.PLAYER]: null,
@@ -31,6 +32,7 @@ export const PieceCooldown = {
   [BlackPieceType.BLACK_ROOK]: null,
   [BlackPieceType.BLACK_BISHOP]: null,
   [BlackPieceType.BLACK_QUEEN]: null,
+  [BlackPieceType.BLACK_KNIGHT]: null,
   [PieceType.QUEEN]: 5,
   [PieceType.ROOK]: 4,
   [PieceType.BISHOP]: 4,
@@ -154,6 +156,17 @@ export const PieceMovementFunc = {
       getMoveCellsByDirection(pos, -1, -1, playerPos, occupied,gridSize),
       getMoveCellsByDirection(pos, 1, -1, playerPos, occupied,gridSize)
     ),
+  [BlackPieceType.BLACK_KNIGHT]: (pos, playerPos, occupied, gridSize) =>
+  getMoveCellsByOffset(
+    pos,
+    playerPos,
+    occupied,
+    [
+      { x: 1, y: 2 }, { x: 2, y: 1 }, { x: 2, y: -1 }, { x: 1, y: -2 },
+      { x: -1, y: -2 }, { x: -2, y: -1 }, { x: -2, y: 1 }, { x: -1, y: 2 },
+    ],
+    gridSize
+  ),
   [BlackPieceType.BLACK_QUEEN]: (pos, playerPos, occupied,gridSize) =>
     [].concat(
       getMoveCellsByDirection(pos, 1, 0, playerPos, occupied,gridSize),
@@ -221,6 +234,17 @@ export const PieceCaptureFunc = {
       getCaptureCellsByDirection(pos, -1, -1, playerPos, occupied,gridSize),
       getCaptureCellsByDirection(pos, 1, -1, playerPos, occupied,gridSize)
     ),
+  [BlackPieceType.BLACK_KNIGHT]: (pos, playerPos, occupied, gridSize) =>
+  getCaptureCellsByOffset(
+    pos,
+    playerPos,
+    occupied,
+    [
+      { x: 1, y: 2 }, { x: 2, y: 1 }, { x: 2, y: -1 }, { x: 1, y: -2 },
+      { x: -1, y: -2 }, { x: -2, y: -1 }, { x: -2, y: 1 }, { x: -1, y: 2 },
+    ],
+    gridSize
+  ),
   [BlackPieceType.BLACK_QUEEN]: (pos, playerPos, occupied,gridSize) =>
     [].concat(
       getCaptureCellsByDirection(pos, 1, 0, playerPos, occupied,gridSize),
