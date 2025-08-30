@@ -88,8 +88,13 @@ $gameOverWidth: 100vw;
       @include theme.breathing;
     }
   }
-  button.playagain {
-    width: 5rem;
+    button.playagain {
+    width: auto;         /* allow button to size to content */
+    white-space: nowrap; /* keep "Play Again" on one line */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6rem 1.2rem; /* optional: nicer sizing */
   }
 }
 
@@ -111,6 +116,7 @@ $gameOverWidth: 100vw;
   color: theme.$acc-clr-1;
 
   span.uiVariable {
+    margin-bottom: 0.5rem;
     margin-bottom: 0.5rem;
     font-size: 4rem;
   }
@@ -161,34 +167,54 @@ $gameOverWidth: 100vw;
     }
   }
 }
+
+
 .upgradeButtonsContainer {
   position: absolute;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
+  /* Left edge aligned with the grid’s left edge */
+  left: calc(50vw - theme.$grid-scale / 2);
+  /* Just below the grid’s bottom edge (tweak +2vmin as needed) */
+  top: calc(58vh + theme.$grid-scale / 2 + 2vmin);
+
+  width: theme.$grid-scale;
   display: flex;
+  justify-content: center;
   gap: 1rem;
   z-index: 100;
 }
 
 .upgradeButton {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  /* Cell-like styling */
+  background-color: theme.$cell-clr-1;
+  background-image: linear-gradient(45deg, rgba(255,255,255,0.12) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.12) 75%, transparent 75%, transparent);
+  background-size: 4vmin 4vmin;
+  color: theme.$dark-clr-1;
+  border: 0.35vmin solid rgba(0, 0, 0, 0.25);
+  border-radius: 1.2vmin;
+  padding: 0.8vmin 1.6vmin;
+  font-size: 2.2vmin;
+  line-height: 1;
+  text-shadow: 0 0.3vmin 0.6vmin rgba(0, 0, 0, 0.35);
+  box-shadow:
+    inset 0 0.6vmin 0.9vmin rgba(0, 0, 0, 0.25),
+    0 0.6vmin 1.2vmin rgba(0, 0, 0, 0.35);
   cursor: pointer;
-  border-radius: 8px;
-  transition: background-color 0.3s ease;
+  transition: transform 120ms ease, filter 120ms ease;
 
   &:hover:not([disabled]) {
-    background-color: #45a049;
+    transform: translateY(-0.3vmin);
+    filter: brightness(1.05);
+  }
+
+  &:active:not([disabled]) {
+    transform: translateY(0.1vmin) scale(0.99);
+    filter: brightness(0.98);
   }
 
   &:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
     opacity: 0.6;
+    cursor: not-allowed;
+    filter: grayscale(0.3);
   }
 }
 

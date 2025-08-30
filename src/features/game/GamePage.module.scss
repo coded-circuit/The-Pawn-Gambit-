@@ -49,8 +49,8 @@ $grid-border-thickness: 3vmin;
     overflow: hidden;
 
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    grid-template-rows: repeat(8, 1fr);
+    // grid-template-columns: repeat(8, 1fr);
+    // grid-template-rows: repeat(8, 1fr);
   }
 
   &.piecesContainer {

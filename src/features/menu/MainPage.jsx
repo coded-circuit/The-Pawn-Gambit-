@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
-import { switchPage } from "../../data/menuSlice";
-import { PageName, TRANSITION_HALF_LIFE, sleep } from "../../global/utils";
+import { useDispatch,useSelector } from "react-redux";
+import { startGame } from "../../data/gameSlice";
+import { switchPage,setDifficulty, setShowIndicators } from "../../data/menuSlice";
+import { Difficulty,PageName, TRANSITION_HALF_LIFE, sleep } from "../../global/utils";
 import styles from "./MainPage.module.scss";
 
 import Logo from "./components/Logo";
@@ -28,28 +29,41 @@ const MainPage = () => {
         <p className={styles.tagline}>Survive the board. Upgrade. Outplay the horde.</p>
         <div className={styles.buttons}>
           <button className={`${styles.cta} ${styles.primary}`}
+    onMouseDown={(e) => e.preventDefault()}
+    onClick={() => {
+      if (hasClicked) return;
+    // Practice: force Casual difficulty and show indicators ON
+    // Clear any tournament flags so Quit routes to MAIN_MENU
+      try { localStorage.removeItem("tournamentCurrentRound"); } catch {}
+      dispatch(setDifficulty(Difficulty.EASY));
+      dispatch(setShowIndicators(true));
+      dispatch(startGame({difficulty: Difficulty.EASY}));
+      dispatch(switchPage(PageName.GAME));
+      setHasClicked(true);
+    }}
+    disabled={disabled}
+>
+  PRACTICE
+</button>
+        {/* <button className={`${styles.cta} ${styles.primary}`}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={handleTournamentClick}
+          disabled={disabled}
+        >
+          TOURNAMENT
+        </button> */}
+        <button className={`${styles.cta} ${styles.primary}`}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             if (hasClicked) return;
-            dispatch(switchPage(PageName.GAME));
-            setHasClicked(true);
-          }}
-          disabled={disabled}
-        >
-          SINGLE PLAYER
-        </button>
-        <button className={`${styles.cta} ${styles.primary}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => {  
-            if (hasClicked) return;
-            dispatch(switchPage(PageName.GAME));
+            dispatch(switchPage(PageName.TOURNAMENT_LOGIN));
             setHasClicked(true);
           }}
           disabled={disabled}
         >
           TOURNAMENT
         </button>
-        <button className={`${styles.cta} ${styles.primary}`}
+        {/* <button className={`${styles.cta} ${styles.primary}`}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             if (hasClicked) return;
@@ -59,8 +73,8 @@ const MainPage = () => {
           disabled={disabled}
         >
           HOW TO PLAY
-        </button>
-        <button className={`${styles.cta} ${styles.primary}`}
+        </button> */}
+        {/* <button className={`${styles.cta} ${styles.primary}`}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             if (hasClicked) return;
@@ -70,7 +84,7 @@ const MainPage = () => {
           disabled={disabled}
         >
           OPTIONS
-        </button>
+        </button> */}
         </div>
         
         </section>

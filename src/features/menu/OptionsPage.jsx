@@ -33,7 +33,10 @@ const OptionsPage = () => {
       difficultyStr = "HARD";
       break;
     case Difficulty.HARD:
-      difficultyStr = "BRUTAL";
+      difficultyStr = "BRUTAL"; 
+      break;
+    case Difficulty.INSANE:
+      difficultyStr = "INSANE";
       break;
   }
   const showIndicatorsStr = currShowIndicators ? "ON" : "OFF";
@@ -56,7 +59,7 @@ const OptionsPage = () => {
           onClick={() => {
             if (isExiting) return;
             const newValue =
-              currDifficulty === Difficulty.HARD
+              currDifficulty === Difficulty.INSANE
                 ? Difficulty.EASY
                 : currDifficulty + 1;
             dispatch(setDifficulty(newValue));

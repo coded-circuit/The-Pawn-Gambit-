@@ -16,6 +16,7 @@ export const BlackPieceType = {
   BLACK_ROOK: "BlackRook",
   BLACK_BISHOP: "BlackBishop",
   BLACK_QUEEN: "BlackQueen",
+  BLACK_KNIGHT: "BlackKnight",
 };
 export const PageName = {
   MAIN_MENU: 0,
@@ -23,11 +24,15 @@ export const PageName = {
   HOW_TO_PLAY: 2,
   OPTIONS: 3,
   CREDITS: 4,
+  TOURNAMENT_LOGIN:5,
+  TOURNAMENT_ROUNDS:6,
 };
 export const Difficulty = {
   EASY: 0,
   NORMAL: 1,
   HARD: 2,
+  INSANE: 3,
+  DUOS : 4,
 };
 
 Object.freeze(PieceType);
@@ -83,10 +88,10 @@ export function assertIsVector(vector) {
   );
 }
 
-export function extractOccupiedCells(matrix) {
+export function extractOccupiedCells(matrix, gridSize) {
   const output = [];
-  for (let y = 0; y < 8; y++) {
-    for (let x = 0; x < 8; x++) {
+  for (let y = 0; y < gridSize; y++) {
+    for (let x = 0; x < gridSize; x++) {
       if (matrix[y][x] !== false) {
         output.push({ x, y });
       }

@@ -4,39 +4,39 @@
 .rook,
 .bishop,
 .queen {
-  width: calc(theme.$grid-scale / 8 * 0.7);
+  width: calc(theme.$grid-scale / var(--grid-size, 8) * 0.7);
   position: absolute;
-  bottom: calc(theme.$grid-scale / 8 * 0.25);
+  bottom: calc(theme.$grid-scale / var(--grid-size, 8) * 0.25);
 
   &.player {
-    left: calc(theme.$grid-scale / 8 * 0.152);
+    left: calc(theme.$grid-scale / var(--grid-size, 8) * 0.152);
   }
 
   &.pawn {
-    left: calc(theme.$grid-scale / 8 * 0.15);
+    left: calc(theme.$grid-scale / var(--grid-size, 8) * 0.15);
   }
 
   &.knight {
-    left: calc(theme.$grid-scale / 8 * 0.13);
+    left: calc(theme.$grid-scale / var(--grid-size, 8) * 0.13);
   }
 
   &.bishop {
-    left: calc(theme.$grid-scale / 8 * 0.15);
+    left: calc(theme.$grid-scale / var(--grid-size, 8) * 0.15);
   }
 
   &.rook {
-    left: calc(theme.$grid-scale / 8 * 0.15);
+    left: calc(theme.$grid-scale / var(--grid-size, 8) * 0.15);
   }
 
   &.queen {
-    left: calc(theme.$grid-scale / 8 * 0.15);
+    left: calc(theme.$grid-scale / var(--grid-size, 8) * 0.15);
   }
 }
 
 .shadow {
-  width: calc(theme.$grid-scale / 8 * 0.8);
-  left: calc(theme.$grid-scale / 8 * 0.1);
-  bottom: calc(theme.$grid-scale / 8 * 0.15);
+  width: calc(theme.$grid-scale / var(--grid-size, 8) * 0.8);
+  left: calc(theme.$grid-scale / var(--grid-size, 8) * 0.1);
+  bottom: calc(theme.$grid-scale / var(--grid-size, 8) * 0.15);
   z-index: -1;
   position: absolute;
 }

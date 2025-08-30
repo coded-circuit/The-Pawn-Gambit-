@@ -1,0 +1,297 @@
+// Import theme
+// @use "../../global/theme.scss" as theme;
+
+.lobby {
+  @include theme.movingStripes;
+  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  color: theme.$dark-clr-1;
+  overflow: hidden; // Allow horizontal scroll if needed
+}
+
+.panel {
+  width: min(100%, 120rem);
+  max-width: calc(100vw - 2rem); 
+  padding: 2rem;
+  border-radius: 1.4rem;
+  border: 3px solid theme.$acc-clr-2;
+  background: rgba(250, 230, 206, 0.85);
+  box-shadow: 0 1.2rem 3rem rgba(0, 0, 0, 0.15), inset 0 0 0.8rem rgba(138, 92, 93, 0.08);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+  max-height: calc(100vh - 2rem);
+//   opacity: 0.8;
+}
+
+.heading {
+  text-align: center;
+  font-size: clamp(2.5rem, 3.5vw, 3rem); // Responsive font size
+  margin-bottom: 1.5rem;
+  color: theme.$dark-clr-1;
+  flex-shrink: 0;
+  text-shadow: 0 0.2rem 0.4rem rgba(0, 0, 0, 0.1);
+}
+
+// Horizontal Timeline
+.timelineContainer {
+  position: relative;
+  margin: 2rem 0 4rem 0;
+  height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+.timelineLine {
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  right: 10%;
+  height: 6px;
+  background: linear-gradient(90deg, theme.$acc-clr-1 0%, theme.$acc-clr-3 50%, theme.$acc-clr-1 100%);
+  border-radius: 3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 8px,
+      rgba(255, 255, 255, 0.3) 8px,
+      rgba(255, 255, 255, 0.3) 16px
+    );
+    border-radius: 3px;
+    animation: timelineMove 2s linear infinite;
+  }
+}
+
+.timelineNumbers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10%;
+}
+
+.timelineNumber {
+  position: relative;
+  z-index: 2;
+}
+
+.numberCircle {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, theme.$acc-clr-3 0%, #d19948 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: bold;
+  border: 3px solid white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+  
+  &:hover {
+    transform: scale(1);
+  }
+}
+
+// Round Cards - All in one horizontal line
+.rounds {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); // More flexible grid
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  overflow-x: auto; // Allow horizontal scroll if needed
+}
+.card {
+  min-width: 250px; // Minimum width to prevent cards from being too small
+  padding: 1rem;
+  padding-bottom: 2rem;
+  border-radius: 1.2rem;
+  border: 2px solid theme.$acc-clr-2;
+  background: rgba(223, 193, 157, 0.4);
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.1),
+    inset 0 0 0.8rem rgba(138, 92, 93, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  
+  &:hover {
+    box-shadow: 
+      0 12px 28px rgba(0, 0, 0, 0.15),
+      inset 0 0 0.8rem rgba(138, 92, 93, 0.08);
+  }
+}
+.cardHeader {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.cardTitle {
+  margin: 0 0 0.5rem 0;
+  font-size: 2.4rem; // Increased from 1.8rem
+  color: theme.$acc-clr-1;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.cardSubtitle {
+  margin: 0;
+  font-size: 1.8rem; // Increased from 1.3rem
+  color: theme.$dark-clr-1;
+  font-weight: normal;
+  opacity: 0.8;
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+  padding: 0.8rem;
+  background: rgba(138, 92, 93, 0.1); // Warmer summary background
+  border-radius: 0.6rem;
+  border: 1px solid theme.$acc-clr-2;
+  
+  div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.2rem;
+    color: theme.$dark-clr-1;
+    
+    span {
+      color: theme.$acc-clr-1;
+      font-weight: bold;
+      font-size: 1.3rem;
+    }
+  }
+}
+
+.empty {
+  text-align: center;
+  opacity: 0.6;
+  margin-bottom: 1.2rem;
+  padding: 0.8rem;
+  font-style: italic;
+  color: theme.$dark-clr-1;
+  font-size: 1.1rem;
+}
+
+.startButton {
+  width: 80%;
+  margin-left: 10%;
+  font-size: 1.4rem;
+  font-weight: 600;
+  padding: 1rem;
+  border-radius: 0.8rem;
+  border: none;
+  color: white;
+  background: linear-gradient(135deg, theme.$acc-clr-3 0%, #d19948 100%);
+  box-shadow: 
+    0 0.4rem 0 #b8823a, 
+    0 0.8rem 1.5rem rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  
+  &:hover:not(:disabled) {
+    transform:none;
+    box-shadow: 
+      0 0.6rem 0 #b8823a, 
+      0 1.2rem 2rem rgba(0, 0, 0, 0.2);
+    filter: brightness(1.05);
+
+  }
+  
+  &:active {
+    transform: translateY(1px);
+    box-shadow: 
+      0 0.2rem 0 #b8823a, 
+      0 0.4rem 0.8rem rgba(0, 0, 0, 0.15);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    
+    &:hover, &:active {
+      transform: none;
+      box-shadow: 
+        0 0.4rem 0 #b8823a, 
+        0 0.8rem 1.5rem rgba(0, 0, 0, 0.15);
+    }
+  }
+}
+
+.actions {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  gap: 2rem; // Add gap between buttons
+  flex-wrap: wrap; // Allow buttons to wrap on smaller screens
+}
+.backButton {
+  font-size: 1.6rem;
+  font-weight: 600;
+  padding: 1rem 3rem;
+  border-radius: 1rem;
+  border: 2px solid theme.$acc-clr-2;
+  background: rgba(223, 193, 157, 0.6); // Warmer back button background
+  color: theme.$dark-clr-1;
+  transition: all 0.3s ease;
+  box-shadow: none; // Removed shadow as requested
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    background: rgba(223, 193, 157, 0.8);
+    border-color: theme.$acc-clr-1;
+  }
+  
+  &:active {
+    transform: translateY(1px);
+    background: rgba(223, 193, 157, 0.5);
+  }
+}
+
+// Animations
+@keyframes timelineMove {
+  0% {
+    background-position: 0px 0px;
+  }
+  100% {
+    background-position: 16px 0px;
+  }
+}
+
+// Responsive - stack cards on smaller screens
+@media (max-width: 1200px) {
+  .rounds {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .rounds {
+    grid-template-columns: 1fr;
+  }
+  
+  .panel {
+    width: min(100%, 60rem);
+  }
+}
