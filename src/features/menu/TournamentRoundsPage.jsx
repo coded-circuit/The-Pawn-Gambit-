@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { startGame } from "../../data/gameSlice";
-import { switchPage } from "../../data/menuSlice";
+import { switchPage,setShowIndicators } from "../../data/menuSlice";
 import { Difficulty, PageName, TRANSITION_HALF_LIFE, sleep } from "../../global/utils";
 import styles from "./TournamentRoundsPage.module.scss";
 
@@ -35,17 +35,31 @@ export default function TournamentRoundsPage() {
     ],
     []
   );
+  
 
   const startRound = (roundIdx) => {
-    const round = rounds[roundIdx - 1];
-    if (!round) return;
+  const round = rounds[roundIdx - 1];
+  if (!round) return;
 
-    // Remember which round is starting (useful later when saving results)
-    localStorage.setItem("tournamentCurrentRound", String(roundIdx));
+  if (round.id > 1) {
+    window.showPasswordOverlay({
+      message: `Enter password to start Round ${round.id}:`,
+      expected: `190725${round.id}`, // same box as reload; round-specific password
+      onSuccess: () => {
+        localStorage.setItem("tournamentCurrentRound", String(roundIdx));
+        dispatch(setShowIndicators(false));
+        dispatch(startGame({ difficulty: round.difficulty }));
+        dispatch(switchPage(PageName.GAME));
+      },
+    });
+    return;
+  }
 
-    dispatch(startGame({ difficulty: round.difficulty }));
-    dispatch(switchPage(PageName.GAME));
-  };
+  localStorage.setItem("tournamentCurrentRound", String(roundIdx));
+  dispatch(setShowIndicators(false));
+  dispatch(startGame({ difficulty: round.difficulty }));
+  dispatch(switchPage(PageName.GAME));
+};
 
   const renderSummary = (key) => {
     const r = progress?.[key];
@@ -87,27 +101,59 @@ export default function TournamentRoundsPage() {
               {renderSummary(round.key)}
               
               <button
-                className={styles.startButton}
-                disabled={disabled}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => startRound(round.id)}
+              className={styles.startButton}
+              disabled={disabled || (round.id === 1 && (progress?.round1?.finished === true))}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => startRound(round.id)}
               >
                 Start Round
               </button>
             </div>
           ))}
         </div>
-
-        <div className={styles.actions}>
-          <button
-            className={styles.backButton}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => dispatch(switchPage(PageName.MAIN_MENU))}
-            disabled={disabled}
-          >
-            Back
-          </button>
+                  {/* Cumulative totals across all completed rounds */}
+        <div className={styles.summary}>
+          <div>
+           Total XP:
+            <span>
+              {["round1","round2","round3","round4"].reduce(
+                (s, k) => s + (progress?.[k]?.totalXP || 0), 0
+              )}
+            </span>
+          </div>
+          <div>
+            Total Gems:
+            <span>
+              {["round1","round2","round3","round4"].reduce(
+                (s, k) => s + (progress?.[k]?.totalGems || 0), 0
+              )}
+            </span>
+          </div>
         </div>
+        <div className={styles.actions}>
+  <button
+    className={styles.backButton}
+    onMouseDown={(e) => e.preventDefault()}
+    onClick={() => dispatch(switchPage(PageName.TOURNAMENT_LOGIN))}
+    disabled={disabled}
+  >
+    Back
+  </button>
+  <button
+    className={styles.backButton}
+    onMouseDown={(e) => e.preventDefault()}
+    onClick={() => {
+      // Clear tournament-related localStorage when explicitly exiting
+      localStorage.removeItem("tournamentCurrentRound");
+      localStorage.removeItem("tournamentProgress");
+      localStorage.removeItem("tournamentUser");
+      dispatch(switchPage(PageName.MAIN_MENU));
+    }}
+    disabled={disabled}
+  >
+    Exit Tournament
+  </button>
+</div>
       </div>
     </main>
   );

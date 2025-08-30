@@ -1,5 +1,5 @@
 import { createSlice, nanoid } from "@reduxjs/toolkit";
-import { Difficulty,arrayHasVector, assert, extractOccupiedCells, BlackPieceType } from "../global/utils";
+import { Difficulty,arrayHasVector, assert, extractOccupiedCells, BlackPieceType, getDistance } from "../global/utils";
 import { generateGrid } from "../features/game/logic/grid";
 import {
   OfficerTypes,
@@ -114,7 +114,8 @@ const gameSlice = createSlice({
 
     addXP: (state, action) => { state.xp += action.payload; },
 
-    endGame: (state) => {
+        endGame: (state) => {
+      // Store final totals for THIS round only
       state.totalXP = state.xp;
       state.totalGems = state.gems;
 
@@ -144,19 +145,19 @@ const gameSlice = createSlice({
        switch (currentPiece) {
         case BlackPieceType.BLACK_PAWN:
           nextPiece = BlackPieceType.BLACK_KNIGHT;
-          cost = 10;
+          cost = 20;
           break;
         case BlackPieceType.BLACK_KNIGHT:
           nextPiece = BlackPieceType.BLACK_ROOK;
-          cost = 20;
+          cost = 50;
           break;
         case BlackPieceType.BLACK_ROOK:
           nextPiece = BlackPieceType.BLACK_BISHOP;
-          cost = 30;
+          cost = 80;
           break;
         case BlackPieceType.BLACK_BISHOP:
           nextPiece = BlackPieceType.BLACK_QUEEN;
-          cost = 40;
+          cost = 130;
           break;
         default:
           return;
@@ -201,7 +202,13 @@ const gameSlice = createSlice({
     state.xp += getPassiveXPIncrease(difficulty, state.turnNumber);
     state.gems += getSurvivalGems();
 
-    if (active.captureCooldownLeft > 0) active.captureCooldownLeft -= 1;
+   if (state.player && state.player.captureCooldownLeft > 0) {
+  state.player.captureCooldownLeft -= 1;
+}
+if (state.player2 && state.player2.captureCooldownLeft > 0) {
+  state.player2.captureCooldownLeft -= 1;
+}
+
 
     state.queuedForDeletion.forEach((pieceId) => delete state.pieces[pieceId]);
     state.queuedForDeletion = [];
@@ -236,83 +243,215 @@ const gameSlice = createSlice({
       }
     },
     
-    processPieces: (state, action) => {
-  // Spawn based on difficulty
+      // Replace the existing reducer with this updated version
+// Replace the existing reducer with this updated version
+processPieces: (state, action) => {
+  // 1) Spawn based on difficulty
   const difficulty = action?.payload?.difficulty;
-  const toSpawn = getNumberToSpawn(difficulty);
+let toSpawn = getNumberToSpawn(difficulty);
+
+// Soft cap: keep enemy count reasonable per difficulty/grid
+const activeEnemies = Object.values(state.pieces).filter((p) => !p.isCaptured).length;
+const gridArea = state.gridSize * state.gridSize;
+const baseCap = Math.floor(gridArea * 0.18); // ~18% of board (8x8 => 11, 10x10 => 18)
+const capByDifficulty = {
+  [Difficulty.EASY]: Math.min(baseCap, 10),
+  [Difficulty.NORMAL]: Math.min(baseCap, 12),
+  [Difficulty.HARD]: Math.min(baseCap, 14),
+  [Difficulty.INSANE]: Math.min(baseCap, 16),
+  [Difficulty.DUOS]: Math.min(baseCap, 18),
+}[difficulty ?? Difficulty.NORMAL] ?? baseCap;
+
+const remainingSlots = Math.max(0, capByDifficulty - activeEnemies);
+if (remainingSlots <= 0) {
+  toSpawn = 0;
+} else if (toSpawn > remainingSlots) {
+  toSpawn = remainingSlots;
+}
   for (let i = 0; i < toSpawn; i += 1) {
-    const { type, pos } = getPieceWithPos(difficulty, state.gridSize);
+  let placed = false;
+  for (let tries = 0; tries < 3 && !placed; tries += 1) {
+    const { type, pos } = getPieceWithPos(difficulty, state.gridSize, state.playerPieceType);
     if (!state.occupiedCellsMatrix[pos.y][pos.x]) {
       const { pieceId, newPiece } = createPiece(pos.x, pos.y, type);
       state.pieces[pieceId] = newPiece;
       state.occupiedCellsMatrix[pos.y][pos.x] = pieceId;
+      placed = true;
     }
   }
+}
 
-  // Enemy captures
-  const occupied = extractOccupiedCells(state.occupiedCellsMatrix, state.gridSize);
-  const p1Alive = state.player?.isAlive !== false;
-  const p2Alive = !!state.player2 && state.player2.isAlive;
+  // 2) Enemy capture and movement
+  // Movement frequency knob (lower N => more often)
+  const moveEveryNTurnsByDifficulty = {
+    [Difficulty.EASY]: 3,
+    [Difficulty.NORMAL]: 3,
+    [Difficulty.HARD]: 2,
+    [Difficulty.INSANE]: 2,
+    [Difficulty.DUOS]: 2,
+  };
+  const moveMod =
+    moveEveryNTurnsByDifficulty[difficulty ?? Difficulty.NORMAL] ?? 3;
+  const shouldTryMoveThisTurn = state.turnNumber % moveMod === 0;
 
   for (const [pieceId, p] of Object.entries(state.pieces)) {
     if (p.isCaptured) continue;
 
-    // Cooldowns for enemies
+    // Recompute live flags per enemy so earlier captures in this tick are respected
+    const p1Alive = state.player?.isAlive !== false;
+    const p2Alive = !!state.player2 && state.player2.isAlive;
+
+    // Decrement capture cooldown if present; cooldown blocks capture but not movement
     if (typeof p.cooldown === "number" && p.cooldown > 0) {
       p.cooldown -= 1;
-      continue;
     }
+
+    // Always capture-check against the current board state
+    const occupiedForCapture = extractOccupiedCells(
+      state.occupiedCellsMatrix,
+      state.gridSize
+    );
 
     let captured = false;
     let targetPos = null;
     let capturedWhich = 0;
 
-    if (p1Alive) {
-      const caps1 = PieceCaptureFunc[p.type](p.position, state.player.position, occupied, state.gridSize);
-      if (caps1.some((c) => c.x === state.player.position.x && c.y === state.player.position.y)) {
-        targetPos = { ...state.player.position };
-        capturedWhich = 1;
-        captured = true;
+    // Attempt capture only if not on cooldown
+    if ((!p.cooldown || p.cooldown <= 0) && (p1Alive || p2Alive)) {
+      if (p1Alive) {
+        const caps1 = PieceCaptureFunc[p.type](
+          p.position,
+          p.position,
+          occupiedForCapture,
+          state.gridSize
+        );
+        if (
+          caps1.some(
+            (c) =>
+              c.x === state.player.position.x &&
+              c.y === state.player.position.y
+          )
+        ) {
+          targetPos = { ...state.player.position };
+          capturedWhich = 1;
+          captured = true;
+        }
+      }
+
+      if (!captured && p2Alive) {
+        const caps2 = PieceCaptureFunc[p.type](
+          p.position,
+          p.position,
+          occupiedForCapture,
+          state.gridSize
+        );
+        if (
+          caps2.some(
+            (c) =>
+              c.x === state.player2.position.x &&
+              c.y === state.player2.position.y
+          )
+        ) {
+          targetPos = { ...state.player2.position };
+          capturedWhich = 2;
+          captured = true;
+        }
+      }
+
+      if (captured) {
+        moveOccupiedCell(state, p.position, targetPos, pieceId);
+        p.position = targetPos;
+
+        if (capturedWhich === 1) {
+          state.player.isAlive = false;
+        } else if (capturedWhich === 2) {
+          state.player2.isAlive = false;
+        }
+
+        // End only if both are dead (or if no player2)
+        const bothDead =
+          state.player?.isAlive === false &&
+          (!state.player2 || state.player2.isAlive === false);
+        state.isGameOver = bothDead;
+
+        if (typeof PieceCooldown[p.type] === "number") {
+          p.cooldown = PieceCooldown[p.type];
+        }
+        // Skip movement if a capture happened
+        continue;
       }
     }
-    if (!captured && p2Alive) {
-      const caps2 = PieceCaptureFunc[p.type](p.position, state.player2.position, occupied, state.gridSize);
-      if (caps2.some((c) => c.x === state.player2.position.x && c.y === state.player2.position.y)) {
-        targetPos = { ...state.player2.position };
-        capturedWhich = 2;
-        captured = true;
+
+    // No capture -> optionally move closer to the nearest alive player
+    if (shouldTryMoveThisTurn && (p1Alive || p2Alive)) {
+      const targets = [];
+      if (p1Alive) targets.push(state.player.position);
+      if (p2Alive) targets.push(state.player2.position);
+
+      const curr = p.position;
+
+      // Pick nearest target
+      let chosenTarget = targets[0];
+      let minDist = getDistance(curr, targets[0]);
+      for (let i = 1; i < targets.length; i++) {
+        const d = getDistance(curr, targets[i]);
+        if (d < minDist) {
+          minDist = d;
+          chosenTarget = targets[i];
+        }
       }
-    }
 
-    if (captured) {
-      moveOccupiedCell(state, p.position, targetPos, pieceId);
-      p.position = targetPos;
+      // Recompute occupancy for movement as earlier enemies may have moved
+      const occupiedForMove = extractOccupiedCells(
+        state.occupiedCellsMatrix,
+        state.gridSize
+      );
 
-      if (capturedWhich === 1) {
-        state.player.isAlive = false;
-      } else if (capturedWhich === 2) {
-        state.player2.isAlive = false;
+      // Use movement function; pass p.position as second arg (consistent with rest of codebase)
+      const candidates = PieceMovementFunc[p.type](
+        p.position,
+        p.position,
+        occupiedForMove,
+        state.gridSize
+      );
+
+      // Prefer moves that strictly reduce distance to chosen target
+      const improving = candidates.filter(
+        (m) => getDistance(m, chosenTarget) < minDist
+      );
+
+      if (improving.length > 0) {
+        // Among improving moves, pick any with minimum distance (random tie-break)
+        let bestDist = Infinity;
+        let bestMoves = [];
+        for (const m of improving) {
+          const d = getDistance(m, chosenTarget);
+          if (d < bestDist) {
+            bestDist = d;
+            bestMoves = [m];
+          } else if (d === bestDist) {
+            bestMoves.push(m);
+          }
+        }
+        const choice = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+        moveOccupiedCell(state, p.position, choice, pieceId);
+        p.position = choice;
       }
-
-      // End only if both are dead (or if there's no player2 as in normal modes)
-      const bothDead = (state.player?.isAlive === false) && (!state.player2 || state.player2.isAlive === false);
-      state.isGameOver = bothDead;
-
-      if (typeof PieceCooldown[p.type] === "number") {
-        p.cooldown = PieceCooldown[p.type];
-      }
-      // Only one capture per tick per enemy
     }
   }
 },
+
     updateCaptureTiles: (state) => {
   const occupied = extractOccupiedCells(state.occupiedCellsMatrix, state.gridSize);
   const captures = [];
   const p1Alive = state.player?.isAlive !== false;
   const p2Alive = !!state.player2 && state.player2.isAlive;
 
-  Object.values(state.pieces).forEach((p) => {
+   Object.values(state.pieces).forEach((p) => {
     if (p.isCaptured) return;
+    if (typeof p.cooldown === "number" && p.cooldown > 0) return;      // still frozen
+    if (typeof p.attackDelay === "number" && p.attackDelay > 0) return; // cannot attack yet
+
     if (p1Alive) {
       const caps1 = PieceCaptureFunc[p.type](p.position, state.player.position, occupied, state.gridSize);
       captures.push(...caps1);
@@ -321,7 +460,7 @@ const gameSlice = createSlice({
       const caps2 = PieceCaptureFunc[p.type](p.position, state.player2.position, occupied, state.gridSize);
       captures.push(...caps2);
     }
-  });
+  });;
 
   // Deduplicate
   const seen = new Set();
@@ -332,14 +471,7 @@ const gameSlice = createSlice({
     return true;
   });
 
-  // In single-pawn modes, keep legacy "standing on threat => game over".
-  // In DUOS, we rely on processPieces for capture/end conditions.
-  if (!state.player2) {
-    const playerPos = state.player.position;
-    if (state.captureCells.some((c) => c.x === playerPos.x && c.y === playerPos.y)) {
-      state.isGameOver = true;
-    }
-  }
+
 },
   },
   
@@ -376,15 +508,17 @@ function moveOccupiedCell(state, v1, v2, pieceId) {
 }
 function createPiece(x, y, type) {
   const pieceId = nanoid();
-  const baseCooldown = PieceCooldown[type] || 0;
-  const spawnProtection = Math.max(baseCooldown, spawnProtectionTurns);
-  const cappedProtection = Math.min(spawnProtection, 3); // Cap at 3 turns maximum
+  const baseCooldown = PieceCooldown[type] || 0; // per-type base cooldown ON SPAWN
+
   return {
     pieceId,
     newPiece: {
-      position: { x, y }, type, 
-      cooldown: cappedProtection,
-      isCaptured: false, movesMade: 0,
+      position: { x, y },
+      type,
+      cooldown: baseCooldown,   // keeps per-type spawn cooldown
+      attackDelay: 1,           // NEW: one-turn capture lock, separate from cooldown
+      isCaptured: false,
+      movesMade: 0,
     },
   };
 }

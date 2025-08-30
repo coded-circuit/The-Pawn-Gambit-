@@ -40,6 +40,7 @@ const TournamentLoginPage = () => {
     })();
   }, []);
 
+  
   const onSubmit = (e) => {
     e.preventDefault();
     if (!avatarName.trim()) {
@@ -48,16 +49,15 @@ const TournamentLoginPage = () => {
     }
     localStorage.setItem(
       "tournamentUser",
-      JSON.stringify({ 
+      JSON.stringify({
         avatarName: avatarName.trim()
       })
     );
     if (isExiting) return;
     setIsExiting(true);
-    dispatch(startGame({ difficulty: Difficulty.INSANE }));
-    dispatch(switchPage(PageName.GAME));
+    // Go to Tournament Rounds; do NOT start a game here
+    dispatch(switchPage(PageName.TOURNAMENT_ROUNDS));
   };
-
   return (
     <main className={styles.loginMenu}>
       <div className={styles.panel}>
@@ -113,7 +113,7 @@ const TournamentLoginPage = () => {
             >
               Back
             </button>
-            <button
+            {/* <button
               type="submit"
               className={styles.submitButton}
               onMouseDown={(e) => e.preventDefault()}
@@ -122,6 +122,14 @@ const TournamentLoginPage = () => {
                 setIsExiting(true);
                 dispatch(switchPage(PageName.TOURNAMENT_ROUNDS));
               }}
+              disabled={disabled}
+            >
+              Submit
+            </button> */}
+            <button
+              type="submit"
+              className={styles.submitButton}
+              onMouseDown={(e) => e.preventDefault()}
               disabled={disabled}
             >
               Submit

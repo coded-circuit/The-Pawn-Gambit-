@@ -46,16 +46,16 @@ const GameUI = ({
 
   switch (playerPieceType) {
     case BlackPieceType.BLACK_PAWN:
-      upgradeInfo = { cost: 10, nextPieceName: "Knight", isMaxLevel: false };
+      upgradeInfo = { cost: 20, nextPieceName: "Knight", isMaxLevel: false };
       break;
     case BlackPieceType.BLACK_KNIGHT:
-      upgradeInfo = { cost: 20, nextPieceName: "Rook", isMaxLevel: false };
+      upgradeInfo = { cost: 50, nextPieceName: "Rook", isMaxLevel: false };
       break;
     case BlackPieceType.BLACK_ROOK:
-      upgradeInfo = { cost: 30, nextPieceName: "Bishop", isMaxLevel: false };
+      upgradeInfo = { cost: 80, nextPieceName: "Bishop", isMaxLevel: false };
       break;
     case BlackPieceType.BLACK_BISHOP:
-      upgradeInfo = { cost: 40, nextPieceName: "Queen", isMaxLevel: false };
+      upgradeInfo = { cost: 120, nextPieceName: "Queen", isMaxLevel: false };
       break;
     default:
       // Player is a Queen or other, button will not render.
@@ -156,27 +156,45 @@ const GameUI = ({
         </div>
       )}
       {isGameOver && livesLeft === 0 && (
-        <div className={styles.gameOver}>
-          <span className={styles.gameOverText}>FINAL SCORE</span>
-          <div className={styles.gameBox2}>
-            <span className={styles.titleText}>
-              Total XP: <span className={styles.scoreText}>{totalXP}</span>
-            </span>
-            <span className={styles.titleText}>
-              Total Gems: <span className={styles.scoreText}>{totalGems}</span>
-            </span>
-          </div>
-          <button
-            className={styles.uiButton}
-            onClick={(e) => {
-              e.target.blur();
-              dispatch(switchPage(PageName.MAIN_MENU));
-            }}
-          >
-            Quit
-          </button>
-        </div>
-      )}
+  <div className={styles.gameOver}>
+    <span className={styles.gameOverText}>FINAL SCORE</span>
+    <div className={styles.gameBox2}>
+      <span className={styles.titleText}>
+        Total XP: <span className={styles.scoreText}>{xp}</span>
+      </span>
+      <span className={styles.titleText}>
+        Total Gems: <span className={styles.scoreText}>{gems}</span>
+      </span>
+    </div>
+    <button
+      className={styles.uiButton}
+      onClick={(e) => {
+        e.target.blur();
+        try {
+          const roundIdx = parseInt(localStorage.getItem("tournamentCurrentRound") || "0", 10);
+          if (roundIdx > 0) {
+            const key = `round${roundIdx}`;
+            const prev = JSON.parse(localStorage.getItem("tournamentProgress") || "null") || {};
+            prev[key] = {
+              ...(prev[key] || {}),
+              totalXP,
+              totalGems,
+              finished: true,
+              timestamp: Date.now(),
+            };
+            const prevCompleted = Number(prev.completed || 0);
+            prev.completed = Math.max(prevCompleted, roundIdx);
+            localStorage.setItem("tournamentProgress", JSON.stringify(prev));
+          }
+        } catch {}
+        // Return to rounds lobby
+        dispatch(switchPage(PageName.TOURNAMENT_ROUNDS));
+      }}
+    >
+      Quit
+    </button>
+  </div>
+)}
       <div className={styles.upperLeft}>
         <span className={styles.uiLabel}>XP:</span>
         <span className={xpClass}>{xp}</span>
@@ -187,17 +205,21 @@ const GameUI = ({
         <span className={styles.uiLabel}>LIVES LEFT:</span>
         <span className={styles.uiVariable}>{renderLives()}</span>
       </div>
-      <div className={styles.upperRight}>
+            <div className={styles.upperRight}>
         <button
           className={styles.uiButton}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
-            (async () => {
-              dispatch(switchPage(PageName.GAME));
-              await sleep(TRANSITION_HALF_LIFE);
-              dispatch(resetState());
-            })();
-          }}
+          window.showPasswordOverlay({
+          message: "Enter password to reset:",
+          expected: "190725",
+          onSuccess: async () => {
+          dispatch(switchPage(PageName.GAME));
+          await sleep(TRANSITION_HALF_LIFE);
+          dispatch(resetState());
+        },
+        });
+        }}
         >
           <ResetSvg />
         </button>
@@ -206,7 +228,9 @@ const GameUI = ({
           onMouseDown={(e) => e.preventDefault()}
           onClick={(e) => {
             e.target.blur();
-            dispatch(switchPage(PageName.MAIN_MENU));
+            const roundIdx = parseInt(localStorage.getItem("tournamentCurrentRound") || "0", 10);
+            const isTournament = Number.isFinite(roundIdx) && roundIdx > 0;
+            dispatch(switchPage(isTournament ? PageName.TOURNAMENT_ROUNDS : PageName.MAIN_MENU));
           }}
         >
           <QuitSvg />
