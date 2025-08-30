@@ -1,5 +1,5 @@
 import { createSlice, nanoid } from "@reduxjs/toolkit";
-import { Difficulty,arrayHasVector, assert, extractOccupiedCells, BlackPieceType, getDistance } from "../global/utils";
+import { Difficulty,arrayHasVector, assert, extractOccupiedCells, BlackPieceType, PieceType, getDistance } from "../global/utils";
 import { generateGrid } from "../features/game/logic/grid";
 import {
   OfficerTypes,
@@ -233,6 +233,17 @@ if (state.player2 && state.player2.captureCooldownLeft > 0) {
     addPiece: {
       reducer(state, action) {
         const { x, y, type } = action.payload;
+        // Safety: never allow player-only BlackPieceTypes to be added to enemy pieces
+        if (
+          type === BlackPieceType.BLACK_PAWN ||
+          type === BlackPieceType.BLACK_ROOK ||
+          type === BlackPieceType.BLACK_BISHOP ||
+          type === BlackPieceType.BLACK_QUEEN ||
+          type === BlackPieceType.BLACK_KNIGHT
+        ) {
+          
+          return;
+        }
         if (state.occupiedCellsMatrix[y][x]) return;
         const { pieceId, newPiece } = createPiece(x, y, type);
         state.pieces[pieceId] = newPiece;
@@ -246,6 +257,18 @@ if (state.player2 && state.player2.captureCooldownLeft > 0) {
       // Replace the existing reducer with this updated version
 // Replace the existing reducer with this updated version
 processPieces: (state, action) => {
+  // Sanity sweep: ensure no player-only BlackPieceTypes exist in enemy pieces
+  for (const p of Object.values(state.pieces)) {
+  if (!p || !p.type) continue;
+  switch (p.type) {
+    case BlackPieceType.BLACK_KNIGHT: p.type = PieceType.KNIGHT; break;
+    case BlackPieceType.BLACK_ROOK:   p.type = PieceType.ROOK;   break;
+    case BlackPieceType.BLACK_BISHOP: p.type = PieceType.BISHOP; break;
+    case BlackPieceType.BLACK_QUEEN:  p.type = PieceType.QUEEN;  break;
+    case BlackPieceType.BLACK_PAWN:   p.type = PieceType.PAWN_N; break;
+    default: break;
+  }
+}
   // 1) Spawn based on difficulty
   const difficulty = action?.payload?.difficulty;
 let toSpawn = getNumberToSpawn(difficulty);
@@ -284,12 +307,12 @@ if (remainingSlots <= 0) {
   // 2) Enemy capture and movement
   // Movement frequency knob (lower N => more often)
   const moveEveryNTurnsByDifficulty = {
-    [Difficulty.EASY]: 3,
-    [Difficulty.NORMAL]: 3,
-    [Difficulty.HARD]: 2,
-    [Difficulty.INSANE]: 2,
-    [Difficulty.DUOS]: 2,
-  };
+  [Difficulty.EASY]: 4,    // was 3
+  [Difficulty.NORMAL]: 3,  // was 3
+  [Difficulty.HARD]: 3,    // was 2
+  [Difficulty.INSANE]: 2,  // unchanged
+  [Difficulty.DUOS]: 2,    // unchanged
+};
   const moveMod =
     moveEveryNTurnsByDifficulty[difficulty ?? Difficulty.NORMAL] ?? 3;
   const shouldTryMoveThisTurn = state.turnNumber % moveMod === 0;
@@ -508,19 +531,32 @@ function moveOccupiedCell(state, v1, v2, pieceId) {
 }
 function createPiece(x, y, type) {
   const pieceId = nanoid();
-  const baseCooldown = PieceCooldown[type] || 0; // per-type base cooldown ON SPAWN
+  // Normalize: enemies should never use BlackPieceType values
+  const safeType = normalizeEnemyType(type);
+  const baseCooldown = PieceCooldown[safeType] || 0;
 
   return {
     pieceId,
     newPiece: {
       position: { x, y },
-      type,
-      cooldown: baseCooldown,   // keeps per-type spawn cooldown
-      attackDelay: 1,           // NEW: one-turn capture lock, separate from cooldown
+      type: safeType,
+      cooldown: baseCooldown,
+      attackDelay: 1,
       isCaptured: false,
       movesMade: 0,
     },
   };
+}
+
+function normalizeEnemyType(t) {
+  switch (t) {
+    case BlackPieceType.BLACK_KNIGHT: return PieceType.KNIGHT;
+    case BlackPieceType.BLACK_ROOK:   return PieceType.ROOK;
+    case BlackPieceType.BLACK_BISHOP: return PieceType.BISHOP;
+    case BlackPieceType.BLACK_QUEEN:  return PieceType.QUEEN;
+    case BlackPieceType.BLACK_PAWN:   return PieceType.PAWN_N; // arbitrary fallback
+    default: return t;
+  }
 }
 function queueDelete(state, pieceId) {
   if (!state.pieces[pieceId]) return;

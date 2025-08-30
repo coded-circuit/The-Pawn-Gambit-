@@ -1,0 +1,179 @@
+$acc-clr-1: #8a5c5d;
+$acc-clr-2: #714849;
+$acc-clr-3: #e6a459;
+
+$dark-clr-1: #3d3d3d;
+$dark-clr-trans: #3d3d3d91;
+
+$light-clr-1: #fae6ce;
+$light-clr-2: #dfc19d;
+
+$cell-clr-1: #e1c39f;
+$cell-clr-2: #c69b6b;
+
+$stripe-scale: 6rem;
+$stripe-color: #f1ddc6;
+$checker-scale: 12rem;
+$checker-clr-1: $acc-clr-1;
+$checker-clr-2: #7f5656;
+
+$z-ind-transition: 99;
+$z-ind-game-ui: 90;
+$z-ind-grid-pieces: 5;
+$z-ind-grid-pieces-shadow: 4;
+$z-ind-grid: 3;
+$z-ind-grid-border: 2;
+$z-ind-grid-trunk: 1;
+$z-ind-modal: 91;
+
+$grid-scale: 65vmin;
+
+// ------------------------------------------------- MIXINS --------------------------------------------------
+@mixin checkered {
+  background-color: $acc-clr-1;
+  background-image: linear-gradient(
+      -45deg,
+      $checker-clr-2 0,
+      $checker-clr-2 25%,
+      transparent 25%,
+      transparent 100%
+    ),
+    linear-gradient(
+      45deg,
+      $checker-clr-2 0,
+      $checker-clr-2 25%,
+      transparent 25%,
+      transparent 100%
+    ),
+    linear-gradient(
+      135deg,
+      $checker-clr-2 0,
+      $checker-clr-2 25%,
+      transparent 25%,
+      transparent 100%
+    ),
+    linear-gradient(
+      -135deg,
+      $checker-clr-2 0,
+      $checker-clr-2 25%,
+      transparent 25%,
+      transparent 100%
+    );
+
+  background-size: $checker-scale $checker-scale;
+  background-position: 10rem 0;
+}
+
+@mixin movingStripes {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    $light-clr-1 0,
+    $light-clr-1 $stripe-scale,
+    $stripe-color $stripe-scale,
+    $stripe-color $stripe-scale * 2
+  );
+  $size: $stripe-scale * sqrt(8);
+  background-size: $size $size;
+  animation: stripeMovement 6s linear infinite;
+}
+
+@mixin mainMenuContainer {
+  width: max(60vmin, 60vw);
+  width: 60vw;
+  height: 100vh;
+  color: $light-clr-1;
+  margin-inline: auto;
+  max-width: 800px;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    @include checkered;
+
+    height: 100%;
+  }
+}
+
+@mixin breathing {
+  animation: breathing 3s ease-out infinite;
+}
+
+@mixin barFull {
+  animation: barFull 0.5s infinite;
+}
+
+@mixin heading {
+  color: $light-clr-2;
+  font-size: 5rem;
+  text-shadow: 0 0.3rem 0.6rem black;
+  text-align: center;
+  padding-inline: 2rem;
+  margin-top: -5vh;
+}
+
+// ------------------------------------------------ KEYFRAMES ------------------------------------------------
+@keyframes stripeMovement {
+  0% {
+    background-position: 0;
+  }
+  100% {
+    background-position: $stripe-scale * sqrt(8);
+  }
+}
+
+@keyframes shake {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  33% {
+    transform: rotate(5deg) scale(1.1);
+  }
+  66% {
+    transform: rotate(-5deg) scale(1.2);
+  }
+  100% {
+    transform: rotate(0deg) scale(1.2);
+    color: $acc-clr-3;
+  }
+}
+
+@keyframes strongShake {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  33% {
+    transform: rotate(5deg) scale(1.5);
+  }
+  66% {
+    transform: rotate(-5deg) scale(1.5);
+  }
+}
+
+@keyframes breathing {
+  0%,
+  50%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(-1.5deg) scale(1.02);
+  }
+  75% {
+    transform: rotate(1.5deg) scale(1.02);
+  }
+}
+
+@keyframes barFull {
+  0%,
+  100% {
+    background-color: $acc-clr-3;
+  }
+  50% {
+    background-color: white;
+  }
+}
+

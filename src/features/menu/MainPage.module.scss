@@ -1,3 +1,5 @@
+@use "sass:color";
+
 h1.logo {
   // font-size: 6rem;
   // text-shadow: 0 0.5rem 0.6rem black;
@@ -47,6 +49,7 @@ h1.logo {
   font-size: 2.4rem;
   margin: -0.6rem 0 1.8rem 0;
   text-shadow: 0 0.2rem 0.3rem rgba(0, 0, 0, 0.35);
+  margin-top: 2rem;
 }
 
 .buttons {
@@ -86,9 +89,9 @@ h1.logo {
   }
 }
 .primary {
-  background: linear-gradient(180deg, lighten(theme.$acc-clr-3, 10%) 0%, theme.$acc-clr-3 100%);
+  background: linear-gradient(180deg, color.adjust(theme.$acc-clr-3, $lightness: 10%) 0%, theme.$acc-clr-3 100%);
   color: theme.$light-clr-1;
-  box-shadow: 0 0.6rem 0 darken(theme.$acc-clr-3, 25%), 0 1.2rem 2rem rgba(0, 0, 0, 0.25);
+  box-shadow: 0 0.6rem 0 color.adjust(theme.$acc-clr-3, $lightness: -25%), 0 1.2rem 2rem rgba(0, 0, 0, 0.25);
   font-size: 2rem;
 }
 
