@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch,useSelector } from "react-redux";
 
 import {
   BlackPieceType,
@@ -13,7 +13,7 @@ import {
   restartGame,
   upgradePlayerPiece,
 } from "../../../../data/gameSlice";
-import { switchPage } from "../../../../data/menuSlice";
+import { selectDifficulty, switchPage } from "../../../../data/menuSlice";
 import QuitSvg from "./QuitSvg";
 import ResetSvg from "./ResetSvg";
 import styles from "./UI.module.scss";
@@ -36,6 +36,7 @@ const GameUI = ({
   const [turnNumberClass, setTurnNumberClass] = useState(styles.uiVariable);
   const [xpClass, setXpClass] = useState(styles.uiVariable);
   const [gemsClass, setGemsClass] = useState(styles.uiVariable);
+  const difficulty = useSelector(selectDifficulty);
 
   // --- NEW: Logic to determine next upgrade ---
   let upgradeInfo = {
@@ -149,7 +150,7 @@ const GameUI = ({
           </div>
           <button
             className={styles.playagain}
-            onClick={() => dispatch(restartGame())}
+            onClick={() => dispatch(restartGame({difficulty}))}
           >
             Play Again
           </button>

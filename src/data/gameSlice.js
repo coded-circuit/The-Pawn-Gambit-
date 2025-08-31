@@ -1,4 +1,4 @@
-import { createSlice, nanoid } from "@reduxjs/toolkit";
+import { createSlice, current, nanoid } from "@reduxjs/toolkit";
 import { Difficulty,arrayHasVector, assert, extractOccupiedCells, BlackPieceType, PieceType, getDistance } from "../global/utils";
 import { generateGrid } from "../features/game/logic/grid";
 import {
@@ -47,6 +47,7 @@ const initialState = {
   totalGems: 0,
   totalTurnsSurvived: 0,
   playerPieceType: BlackPieceType.BLACK_PAWN,
+  currentDifficulty:null,
 };
 console.log("Player's position:", initialState.player.position);
 initialState.occupiedCellsMatrix[playerSpawnPos.y][playerSpawnPos.x] = "ThePlayer";
@@ -55,7 +56,61 @@ const gameSlice = createSlice({
   name: "game",
   initialState,
   reducers: {
-    
+    startGame: (state, action) => {
+      const difficulty = action.payload.difficulty;
+      const useBigGrid = difficulty === Difficulty.INSANE || difficulty === Difficulty.DUOS;
+      const gridSize = useBigGrid ? 10 : 8;
+      let spawnPos1;
+      let spawnPos2;
+      if (difficulty === Difficulty.DUOS) {
+        // Even spacing along the main diagonal (0,0) -> (N-1,N-1):
+        // positions at ~1/3 and ~2/3 of the diagonal
+        const i1 = Math.floor((gridSize - 1) / 3);
+        const i2 = Math.floor((2 * (gridSize - 1)) / 3);
+        spawnPos1 = { x: i1, y: i1 };
+        spawnPos2 = { x: i2, y: i2 };
+      } else {
+        const midX = Math.floor(gridSize / 2);
+        const midY = Math.floor(gridSize / 2);
+        spawnPos1 = { x: Math.floor(gridSize / 2) - 1, y: midY };
+        spawnPos2 = { x: midX, y: midY };
+      }
+
+      // Build a fresh state from scratch for reliability
+      state.gridSize = gridSize;
+      state.pieces = {};
+      state.player = {
+        position: spawnPos1,
+        type: BlackPieceType.BLACK_PAWN,
+        captureCooldownLeft: playerCaptureCooldown,
+        isAlive: true,
+      };
+      state.player2 = (difficulty === Difficulty.DUOS)
+        ? {
+        position: spawnPos2,
+        type: BlackPieceType.BLACK_PAWN,
+        captureCooldownLeft: playerCaptureCooldown,
+        isAlive: true,
+      }
+    : null;
+      state.movingPieces = {};
+      state.captureCells = [];
+      state.occupiedCellsMatrix = generateGrid(gridSize); // Create a clean grid
+      state.queuedForDeletion = [];
+      state.turnNumber = 0;
+      state.xp = 0;
+      state.gems = 0;
+      state.livesLeft =4;
+      state.isGameOver = false;
+      // Note: We carry over livesLeft, totalXP, etc. from the initial state or previous games
+      state.playerPieceType = BlackPieceType.BLACK_PAWN;
+      
+      // CRITICAL STEP: Place the player on the new, clean matrix
+      state.occupiedCellsMatrix[spawnPos1.y][spawnPos1.x] = PLAYER1_ID;
+        if (state.player2) {
+          state.occupiedCellsMatrix[spawnPos2.y][spawnPos2.x] = PLAYER2_ID;
+        }
+    },
     resetState: () => initialState,
 
     addXP: (state, action) => { state.xp += action.payload; },
@@ -70,19 +125,78 @@ const gameSlice = createSlice({
         state.totalTurnsSurvived += state.turnNumber;
       }
     },
-    
     restartGame: (state) => {
-      if (state.livesLeft > 0) {
-        const newState = { ...initialState };
-        newState.livesLeft = state.livesLeft - 1;
-        newState.totalXP = state.xp;
-        newState.totalGems = state.gems;
-        newState.totalTurnsSurvived = state.totalTurnsSurvived + state.turnNumber;
-        newState.xp = state.xp;
-        newState.gems = state.gems;
-        return newState;
+      if (state.livesLeft <= 0) return;
+
+      // Use the difficulty from startGame; fallback infers from existing state
+      const difficulty =
+        state.currentDifficulty ??
+        (state.player2 ? Difficulty.DUOS : (state.gridSize === 10 ? Difficulty.INSANE : Difficulty.EASY));
+
+      const useBigGrid = difficulty === Difficulty.INSANE || difficulty === Difficulty.DUOS;
+      const gridSize = useBigGrid ? 10 : 8;
+
+      let spawnPos1;
+      let spawnPos2;
+      if (difficulty === Difficulty.DUOS) {
+        const i1 = Math.floor((gridSize - 1) / 3);
+        const i2 = Math.floor((2 * (gridSize - 1)) / 3);
+        spawnPos1 = { x: i1, y: i1 };
+        spawnPos2 = { x: i2, y: i2 };
+      } else {
+        const midX = Math.floor(gridSize / 2);
+        const midY = Math.floor(gridSize / 2);
+        spawnPos1 = { x: Math.floor(gridSize / 2) - 1, y: midY };
+        spawnPos2 = { x: midX, y: midY };
       }
-    },
+
+      // Roll totals forward and decrement lives
+      state.totalXP = state.xp;
+      state.totalGems = state.gems;
+      state.totalTurnsSurvived = state.totalTurnsSurvived + state.turnNumber;
+      state.livesLeft = state.livesLeft - 1;
+
+      // Rebuild board
+      state.gridSize = gridSize;
+      state.pieces = {};
+      state.movingPieces = {};
+      state.captureCells = [];
+      state.occupiedCellsMatrix = generateGrid(gridSize);
+      state.queuedForDeletion = [];
+      state.turnNumber = 0;
+      state.isGameOver = false;
+
+      // Preserve current upgrade across lives
+      const currentType = state.playerPieceType;
+
+      // Respawn players
+      state.player = {
+        position: spawnPos1,
+        type: currentType,
+        captureCooldownLeft: playerCaptureCooldown,
+        isAlive: true,
+      };
+
+      if (difficulty === Difficulty.DUOS) {
+        state.player2 = {
+          position: spawnPos2,
+          type: currentType,
+          captureCooldownLeft: playerCaptureCooldown,
+          isAlive: true,
+        };
+      } else {
+        state.player2 = null;
+      }
+
+      // Place on the grid
+      state.occupiedCellsMatrix[spawnPos1.y][spawnPos1.x] = PLAYER1_ID;
+      if (state.player2) {
+        state.occupiedCellsMatrix[spawnPos2.y][spawnPos2.x] = PLAYER2_ID;
+      }
+
+      // XP, Gems, and playerPieceType are intentionally preserved
+},
+
 
     upgradePlayerPiece: (state) => {
       const currentPiece = state.playerPieceType;
