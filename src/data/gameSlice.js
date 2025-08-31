@@ -55,61 +55,7 @@ const gameSlice = createSlice({
   name: "game",
   initialState,
   reducers: {
-    startGame: (state, action) => {
-      const difficulty = action.payload.difficulty;
-      const useBigGrid = difficulty === Difficulty.INSANE || difficulty === Difficulty.DUOS;
-      const gridSize = useBigGrid ? 10 : 8;
-      let spawnPos1;
-      let spawnPos2;
-      if (difficulty === Difficulty.DUOS) {
-        // Even spacing along the main diagonal (0,0) -> (N-1,N-1):
-        // positions at ~1/3 and ~2/3 of the diagonal
-        const i1 = Math.floor((gridSize - 1) / 3);
-        const i2 = Math.floor((2 * (gridSize - 1)) / 3);
-        spawnPos1 = { x: i1, y: i1 };
-        spawnPos2 = { x: i2, y: i2 };
-      } else {
-        const midX = Math.floor(gridSize / 2);
-        const midY = Math.floor(gridSize / 2);
-        spawnPos1 = { x: Math.floor(gridSize / 2) - 1, y: midY };
-        spawnPos2 = { x: midX, y: midY };
-      }
-
-      // Build a fresh state from scratch for reliability
-      state.gridSize = gridSize;
-      state.pieces = {};
-      state.player = {
-        position: spawnPos1,
-        type: BlackPieceType.BLACK_PAWN,
-        captureCooldownLeft: playerCaptureCooldown,
-        isAlive: true,
-      };
-      state.player2 = (difficulty === Difficulty.DUOS)
-        ? {
-        position: spawnPos2,
-        type: BlackPieceType.BLACK_PAWN,
-        captureCooldownLeft: playerCaptureCooldown,
-        isAlive: true,
-      }
-    : null;
-      state.movingPieces = {};
-      state.captureCells = [];
-      state.occupiedCellsMatrix = generateGrid(gridSize); // Create a clean grid
-      state.queuedForDeletion = [];
-      state.turnNumber = 0;
-      state.xp = 0;
-      state.gems = 0;
-      state.livesLeft =4;
-      state.isGameOver = false;
-      // Note: We carry over livesLeft, totalXP, etc. from the initial state or previous games
-      state.playerPieceType = BlackPieceType.BLACK_PAWN;
-      
-      // CRITICAL STEP: Place the player on the new, clean matrix
-      state.occupiedCellsMatrix[spawnPos1.y][spawnPos1.x] = PLAYER1_ID;
-        if (state.player2) {
-          state.occupiedCellsMatrix[spawnPos2.y][spawnPos2.x] = PLAYER2_ID;
-        }
-    },
+    
     resetState: () => initialState,
 
     addXP: (state, action) => { state.xp += action.payload; },
@@ -149,15 +95,15 @@ const gameSlice = createSlice({
           break;
         case BlackPieceType.BLACK_KNIGHT:
           nextPiece = BlackPieceType.BLACK_ROOK;
-          cost = 50;
+          cost = 30;
           break;
         case BlackPieceType.BLACK_ROOK:
           nextPiece = BlackPieceType.BLACK_BISHOP;
-          cost = 80;
+          cost = 50;
           break;
         case BlackPieceType.BLACK_BISHOP:
           nextPiece = BlackPieceType.BLACK_QUEEN;
-          cost = 130;
+          cost = 80;
           break;
         default:
           return;
