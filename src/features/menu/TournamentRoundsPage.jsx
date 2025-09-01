@@ -102,7 +102,7 @@ export default function TournamentRoundsPage() {
               
               <button
               className={styles.startButton}
-              disabled={disabled || (round.id === 1 && (progress?.round1?.finished === true))}
+              disabled={disabled || (progress?.[round.key]?.finished === true)}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => startRound(round.id)}
               >

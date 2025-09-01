@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch,useSelector } from "react-redux";
 
 import {
+  BlackPieceType,
   PageName,
   sleep,
   TRANSITION_HALF_LIFE,
-  BlackPieceType,
 } from "../../../../global/utils";
  
 import {
@@ -13,7 +13,7 @@ import {
   restartGame,
   upgradePlayerPiece,
 } from "../../../../data/gameSlice";
-import { switchPage } from "../../../../data/menuSlice";
+import { selectDifficulty, switchPage } from "../../../../data/menuSlice";
 import QuitSvg from "./QuitSvg";
 import ResetSvg from "./ResetSvg";
 import styles from "./UI.module.scss";
@@ -36,6 +36,7 @@ const GameUI = ({
   const [turnNumberClass, setTurnNumberClass] = useState(styles.uiVariable);
   const [xpClass, setXpClass] = useState(styles.uiVariable);
   const [gemsClass, setGemsClass] = useState(styles.uiVariable);
+  const difficulty = useSelector(selectDifficulty);
 
   // --- NEW: Logic to determine next upgrade ---
   let upgradeInfo = {
@@ -49,13 +50,13 @@ const GameUI = ({
       upgradeInfo = { cost: 20, nextPieceName: "Knight", isMaxLevel: false };
       break;
     case BlackPieceType.BLACK_KNIGHT:
-      upgradeInfo = { cost: 50, nextPieceName: "Rook", isMaxLevel: false };
+      upgradeInfo = { cost: 30, nextPieceName: "Rook", isMaxLevel: false };
       break;
     case BlackPieceType.BLACK_ROOK:
-      upgradeInfo = { cost: 80, nextPieceName: "Bishop", isMaxLevel: false };
+      upgradeInfo = { cost: 50, nextPieceName: "Bishop", isMaxLevel: false };
       break;
     case BlackPieceType.BLACK_BISHOP:
-      upgradeInfo = { cost: 120, nextPieceName: "Queen", isMaxLevel: false };
+      upgradeInfo = { cost: 80, nextPieceName: "Queen", isMaxLevel: false };
       break;
     default:
       // Player is a Queen or other, button will not render.
@@ -149,7 +150,7 @@ const GameUI = ({
           </div>
           <button
             className={styles.playagain}
-            onClick={() => dispatch(restartGame())}
+            onClick={() => dispatch(restartGame({difficulty}))}
           >
             Play Again
           </button>
@@ -230,7 +231,25 @@ const GameUI = ({
             e.target.blur();
             const roundIdx = parseInt(localStorage.getItem("tournamentCurrentRound") || "0", 10);
             const isTournament = Number.isFinite(roundIdx) && roundIdx > 0;
-            dispatch(switchPage(isTournament ? PageName.TOURNAMENT_ROUNDS : PageName.MAIN_MENU));
+            if (isTournament) {
+              try {
+                const key = `round${roundIdx}`;
+                const prev = JSON.parse(localStorage.getItem("tournamentProgress") || "null") || {};
+                prev[key] = {
+                  ...(prev[key] || {}),
+                  totalXP: xp,
+                  totalGems: gems,
+                  finished: true,
+                  timestamp: Date.now(),
+                };
+                const prevCompleted = Number(prev.completed || 0);
+                prev.completed = Math.max(prevCompleted, roundIdx);
+                localStorage.setItem("tournamentProgress", JSON.stringify(prev));
+              } catch {}
+              dispatch(switchPage(PageName.TOURNAMENT_ROUNDS));
+            } else {
+              dispatch(switchPage(PageName.MAIN_MENU));
+            }
           }}
         >
           <QuitSvg />

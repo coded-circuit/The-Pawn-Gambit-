@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
 import { BlackPieceType, PieceType, assertIsVector } from "../../../../global/utils";
-import { selectPlayerPosition, selectGridSize } from "../../../../data/gameSlice";
+import { selectGridSize } from "../../../../data/gameSlice";
 import styles from "./Piece.module.scss";
 
 // --- SVG Imports ---
@@ -21,38 +21,31 @@ import { useSelector } from "react-redux";
 
 
 const Piece = ({ gridPos, type, isCaptured, cooldownLeft: cooldownLeftProp }) => {
-  // Always select the player's position (used as a fallback only)
-  const playerGridPos = useSelector(selectPlayerPosition);
   const gridSize = useSelector(selectGridSize);
   const playerCaptureCooldownLeft = useSelector((state) => state.game.player?.captureCooldownLeft);
-  // Prefer the provided gridPos (for enemies and explicitly passed cases),
-  // otherwise fall back to the player's position (for the player's own piece).
-  const effectivePos = gridPos ?? playerGridPos;
 
   // Derive a cooldownLeft value: prefer prop, then fallback to player's cooldown, else 0
   const cooldownLeft = cooldownLeftProp ?? playerCaptureCooldownLeft ?? 0;
 
-  // --- Hooks are now correctly called at the top ---
   const [isMoving, setIsMoving] = useState(false);
 
   useEffect(() => {
     // Animate only when we have a valid position and it changes.
-    if (!effectivePos) return;
+    if (!gridPos) return;
     setIsMoving(true);
     const timer = setTimeout(() => setIsMoving(false), 250);
     return () => clearTimeout(timer);
-  }, [effectivePos?.x, effectivePos?.y]);
+  }, [gridPos?.x, gridPos?.y]);
 
-  // The safety check now happens after all hooks have been called.
-  if (!effectivePos) {
+  if (!gridPos) {
     return null;
   }
-  assertIsVector(effectivePos);
+  assertIsVector(gridPos);
 
   const gfxPlayerStyles = {
-    top: `${(effectivePos.y * 100) / gridSize}%`,
-    left: `${(effectivePos.x * 100) / gridSize}%`,
-    zIndex: effectivePos.y,
+    top: `${(gridPos.y * 100) / gridSize}%`,
+    left: `${(gridPos.x * 100) / gridSize}%`,
+    zIndex: gridPos.y,
     opacity: isCaptured ? 0.0 : 1.0,
   };
 
@@ -88,11 +81,11 @@ const Piece = ({ gridPos, type, isCaptured, cooldownLeft: cooldownLeftProp }) =>
               ? styles.celebrateReference
               : styles.danceReference
           }>
-          {pieceComponent}
-        </div>
-      </div>
-      <Shadow isMoving={isMoving} />
+      {pieceComponent}
     </div>
+  </div>
+  <Shadow isMoving={isMoving} />
+</div>
   );
 };
 

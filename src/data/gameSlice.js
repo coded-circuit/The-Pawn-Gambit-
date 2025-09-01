@@ -1,5 +1,5 @@
-import { createSlice, nanoid } from "@reduxjs/toolkit";
-import { Difficulty,arrayHasVector, assert, extractOccupiedCells, BlackPieceType, getDistance } from "../global/utils";
+import { createSlice, current, nanoid } from "@reduxjs/toolkit";
+import { Difficulty,arrayHasVector, assert, extractOccupiedCells, BlackPieceType, PieceType, getDistance } from "../global/utils";
 import { generateGrid } from "../features/game/logic/grid";
 import {
   OfficerTypes,
@@ -47,6 +47,7 @@ const initialState = {
   totalGems: 0,
   totalTurnsSurvived: 0,
   playerPieceType: BlackPieceType.BLACK_PAWN,
+  currentDifficulty:null,
 };
 console.log("Player's position:", initialState.player.position);
 initialState.occupiedCellsMatrix[playerSpawnPos.y][playerSpawnPos.x] = "ThePlayer";
@@ -124,19 +125,78 @@ const gameSlice = createSlice({
         state.totalTurnsSurvived += state.turnNumber;
       }
     },
-    
     restartGame: (state) => {
-      if (state.livesLeft > 0) {
-        const newState = { ...initialState };
-        newState.livesLeft = state.livesLeft - 1;
-        newState.totalXP = state.xp;
-        newState.totalGems = state.gems;
-        newState.totalTurnsSurvived = state.totalTurnsSurvived + state.turnNumber;
-        newState.xp = state.xp;
-        newState.gems = state.gems;
-        return newState;
+      if (state.livesLeft <= 0) return;
+
+      // Use the difficulty from startGame; fallback infers from existing state
+      const difficulty =
+        state.currentDifficulty ??
+        (state.player2 ? Difficulty.DUOS : (state.gridSize === 10 ? Difficulty.INSANE : Difficulty.EASY));
+
+      const useBigGrid = difficulty === Difficulty.INSANE || difficulty === Difficulty.DUOS;
+      const gridSize = useBigGrid ? 10 : 8;
+
+      let spawnPos1;
+      let spawnPos2;
+      if (difficulty === Difficulty.DUOS) {
+        const i1 = Math.floor((gridSize - 1) / 3);
+        const i2 = Math.floor((2 * (gridSize - 1)) / 3);
+        spawnPos1 = { x: i1, y: i1 };
+        spawnPos2 = { x: i2, y: i2 };
+      } else {
+        const midX = Math.floor(gridSize / 2);
+        const midY = Math.floor(gridSize / 2);
+        spawnPos1 = { x: Math.floor(gridSize / 2) - 1, y: midY };
+        spawnPos2 = { x: midX, y: midY };
       }
-    },
+
+      // Roll totals forward and decrement lives
+      state.totalXP = state.xp;
+      state.totalGems = state.gems;
+      state.totalTurnsSurvived = state.totalTurnsSurvived + state.turnNumber;
+      state.livesLeft = state.livesLeft - 1;
+
+      // Rebuild board
+      state.gridSize = gridSize;
+      state.pieces = {};
+      state.movingPieces = {};
+      state.captureCells = [];
+      state.occupiedCellsMatrix = generateGrid(gridSize);
+      state.queuedForDeletion = [];
+      state.turnNumber = 0;
+      state.isGameOver = false;
+
+      // Preserve current upgrade across lives
+      const currentType = state.playerPieceType;
+
+      // Respawn players
+      state.player = {
+        position: spawnPos1,
+        type: currentType,
+        captureCooldownLeft: playerCaptureCooldown,
+        isAlive: true,
+      };
+
+      if (difficulty === Difficulty.DUOS) {
+        state.player2 = {
+          position: spawnPos2,
+          type: currentType,
+          captureCooldownLeft: playerCaptureCooldown,
+          isAlive: true,
+        };
+      } else {
+        state.player2 = null;
+      }
+
+      // Place on the grid
+      state.occupiedCellsMatrix[spawnPos1.y][spawnPos1.x] = PLAYER1_ID;
+      if (state.player2) {
+        state.occupiedCellsMatrix[spawnPos2.y][spawnPos2.x] = PLAYER2_ID;
+      }
+
+      // XP, Gems, and playerPieceType are intentionally preserved
+},
+
 
     upgradePlayerPiece: (state) => {
       const currentPiece = state.playerPieceType;
@@ -149,15 +209,15 @@ const gameSlice = createSlice({
           break;
         case BlackPieceType.BLACK_KNIGHT:
           nextPiece = BlackPieceType.BLACK_ROOK;
-          cost = 50;
+          cost = 30;
           break;
         case BlackPieceType.BLACK_ROOK:
           nextPiece = BlackPieceType.BLACK_BISHOP;
-          cost = 80;
+          cost = 50;
           break;
         case BlackPieceType.BLACK_BISHOP:
           nextPiece = BlackPieceType.BLACK_QUEEN;
-          cost = 130;
+          cost = 80;
           break;
         default:
           return;
@@ -233,6 +293,17 @@ if (state.player2 && state.player2.captureCooldownLeft > 0) {
     addPiece: {
       reducer(state, action) {
         const { x, y, type } = action.payload;
+        // Safety: never allow player-only BlackPieceTypes to be added to enemy pieces
+        if (
+          type === BlackPieceType.BLACK_PAWN ||
+          type === BlackPieceType.BLACK_ROOK ||
+          type === BlackPieceType.BLACK_BISHOP ||
+          type === BlackPieceType.BLACK_QUEEN ||
+          type === BlackPieceType.BLACK_KNIGHT
+        ) {
+          
+          return;
+        }
         if (state.occupiedCellsMatrix[y][x]) return;
         const { pieceId, newPiece } = createPiece(x, y, type);
         state.pieces[pieceId] = newPiece;
@@ -246,6 +317,18 @@ if (state.player2 && state.player2.captureCooldownLeft > 0) {
       // Replace the existing reducer with this updated version
 // Replace the existing reducer with this updated version
 processPieces: (state, action) => {
+  // Sanity sweep: ensure no player-only BlackPieceTypes exist in enemy pieces
+  for (const p of Object.values(state.pieces)) {
+  if (!p || !p.type) continue;
+  switch (p.type) {
+    case BlackPieceType.BLACK_KNIGHT: p.type = PieceType.KNIGHT; break;
+    case BlackPieceType.BLACK_ROOK:   p.type = PieceType.ROOK;   break;
+    case BlackPieceType.BLACK_BISHOP: p.type = PieceType.BISHOP; break;
+    case BlackPieceType.BLACK_QUEEN:  p.type = PieceType.QUEEN;  break;
+    case BlackPieceType.BLACK_PAWN:   p.type = PieceType.PAWN_N; break;
+    default: break;
+  }
+}
   // 1) Spawn based on difficulty
   const difficulty = action?.payload?.difficulty;
 let toSpawn = getNumberToSpawn(difficulty);
@@ -284,12 +367,12 @@ if (remainingSlots <= 0) {
   // 2) Enemy capture and movement
   // Movement frequency knob (lower N => more often)
   const moveEveryNTurnsByDifficulty = {
-    [Difficulty.EASY]: 3,
-    [Difficulty.NORMAL]: 3,
-    [Difficulty.HARD]: 2,
-    [Difficulty.INSANE]: 2,
-    [Difficulty.DUOS]: 2,
-  };
+  [Difficulty.EASY]: 4,    // was 3
+  [Difficulty.NORMAL]: 3,  // was 3
+  [Difficulty.HARD]: 3,    // was 2
+  [Difficulty.INSANE]: 2,  // unchanged
+  [Difficulty.DUOS]: 2,    // unchanged
+};
   const moveMod =
     moveEveryNTurnsByDifficulty[difficulty ?? Difficulty.NORMAL] ?? 3;
   const shouldTryMoveThisTurn = state.turnNumber % moveMod === 0;
@@ -508,19 +591,32 @@ function moveOccupiedCell(state, v1, v2, pieceId) {
 }
 function createPiece(x, y, type) {
   const pieceId = nanoid();
-  const baseCooldown = PieceCooldown[type] || 0; // per-type base cooldown ON SPAWN
+  // Normalize: enemies should never use BlackPieceType values
+  const safeType = normalizeEnemyType(type);
+  const baseCooldown = PieceCooldown[safeType] || 0;
 
   return {
     pieceId,
     newPiece: {
       position: { x, y },
-      type,
-      cooldown: baseCooldown,   // keeps per-type spawn cooldown
-      attackDelay: 1,           // NEW: one-turn capture lock, separate from cooldown
+      type: safeType,
+      cooldown: baseCooldown,
+      attackDelay: 1,
       isCaptured: false,
       movesMade: 0,
     },
   };
+}
+
+function normalizeEnemyType(t) {
+  switch (t) {
+    case BlackPieceType.BLACK_KNIGHT: return PieceType.KNIGHT;
+    case BlackPieceType.BLACK_ROOK:   return PieceType.ROOK;
+    case BlackPieceType.BLACK_BISHOP: return PieceType.BISHOP;
+    case BlackPieceType.BLACK_QUEEN:  return PieceType.QUEEN;
+    case BlackPieceType.BLACK_PAWN:   return PieceType.PAWN_N; // arbitrary fallback
+    default: return t;
+  }
 }
 function queueDelete(state, pieceId) {
   if (!state.pieces[pieceId]) return;

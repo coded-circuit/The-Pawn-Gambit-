@@ -8,7 +8,8 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
-        additionalData: `@use "/src/global/theme.scss" as theme;`,
+        // Use tokens-only partial to avoid self-import loop when processing theme.scss
+        additionalData: `@use "/src/global/_theme-tokens.scss" as theme;`,
       },
     },
   },

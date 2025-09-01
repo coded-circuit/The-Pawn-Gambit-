@@ -84,7 +84,49 @@ const GamePage = () => {
     setPotentialMoves([...moves, ...captures]);
   }, [playerPosition, playerPieceType, occupiedCellsMatrix, isGameOver]);
 
-    const handleCellClick = (pos) => {
+  // Inactivity timeout: set isGameOver to true if no input for 30 seconds
+  useEffect(() => {
+    if (isGameOver) return;
+
+    const TIMEOUT_MS = 30000; // 30 seconds
+    let timerId;
+
+    const reset = () => {
+      if (isGameOver) return;
+      if (timerId) clearTimeout(timerId);
+      timerId = setTimeout(() => {
+        const currentState = store.getState().game;
+        if (!currentState.isGameOver) {
+          dispatch(endGame());
+        }
+      }, TIMEOUT_MS);
+    };
+
+    const events = [
+      "mousedown",
+      "mousemove",
+      "keydown",
+      "touchstart",
+      "pointerdown",
+      "pointermove",
+    ];
+
+    events.forEach((evt) => {
+      document.addEventListener(evt, reset, { passive: true });
+    });
+
+    // start timer on mount
+    reset();
+
+    return () => {
+      if (timerId) clearTimeout(timerId);
+      events.forEach((evt) => {
+        document.removeEventListener(evt, reset);
+      });
+    };
+  }, [dispatch, isGameOver]);
+
+  const handleCellClick = (pos) => {
     if (isGameOver) return;
 
     const cellVal = occupiedCellsMatrix[pos.y][pos.x];
@@ -92,13 +134,22 @@ const GamePage = () => {
     const isCapturing = cellVal !== false && !isFriendly;
 
     const occupied = extractOccupiedCells(occupiedCellsMatrix);
-    const canP1 = playerPosition && player?.isAlive !== false &&
-      (arrayHasVector(PieceMovementFunc[playerPieceType](playerPosition, playerPosition, occupied, gridSize), pos) ||
-       arrayHasVector(PieceCaptureFunc[playerPieceType](playerPosition, playerPosition, occupied, gridSize), pos));
 
-    const canP2 = player2Position && player2?.isAlive &&
-      (arrayHasVector(PieceMovementFunc[playerPieceType](player2Position, player2Position, occupied, gridSize), pos) ||
-       arrayHasVector(PieceCaptureFunc[playerPieceType](player2Position, player2Position, occupied, gridSize), pos));
+    // Allow clicking on your own cell to count as a turn
+    const isSameAsP1 = !!playerPosition && pos.x === playerPosition.x && pos.y === playerPosition.y;
+    const isSameAsP2 = !!player2Position && pos.x === player2Position.x && pos.y === player2Position.y;
+
+    const canP1 = playerPosition && player?.isAlive !== false && (
+      isSameAsP1 ||
+      arrayHasVector(PieceMovementFunc[playerPieceType](playerPosition, playerPosition, occupied, gridSize), pos) ||
+      arrayHasVector(PieceCaptureFunc[playerPieceType](playerPosition, playerPosition, occupied, gridSize), pos)
+    );
+
+    const canP2 = player2Position && player2?.isAlive && (
+      isSameAsP2 ||
+      arrayHasVector(PieceMovementFunc[playerPieceType](player2Position, player2Position, occupied, gridSize), pos) ||
+      arrayHasVector(PieceCaptureFunc[playerPieceType](player2Position, player2Position, occupied, gridSize), pos)
+    );
 
     let which = 0;
     if (canP1) which = 1;
