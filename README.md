@@ -6,8 +6,23 @@
 Welcome to **The Pawn Gambit**, a minimalist, chess-inspired survival roguelike. In this challenging game, you control a single black piece and must survive as long as possible against an ever-growing army of white pieces. Every move counts as you collect experience, gather gems, and upgrade your piece to become more powerful.
 
 ### 🔴 [**Play the Game**](https://teal-faloodeh-39d1ab.netlify.app/)
+## 🔐 Access Information
+### 🧾 Password Format
+- The **base password** is: `190725`
+- For different rounds, append the **round number** to the base password.
+
+**Examples:**
+| Round | Password |
+|--------|-----------|
+| Round 1 | `1907251` |
+| Round 2 | `1907252` |
+| Round 3 | `1907253` |
+| Round 4 | `1907254` |
+
+> 💡 *Use the corresponding password wherever authentication is required*
 
 ---
+
 
 ## ## Features ✨
 
